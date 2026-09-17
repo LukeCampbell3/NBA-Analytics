@@ -1,0 +1,554 @@
+{
+  "no_outcome_history": {
+    "features": [
+      "log_History_Rows",
+      "days_since_history",
+      "log_Market_Books",
+      "Market_Line",
+      "Market_Line_Std",
+      "Is_Home",
+      "is_pitcher",
+      "no_vig_market_probability"
+    ],
+    "pca_explained_variance_sum": 0.7094067159761293,
+    "development_edge_goal_nodes": 59,
+    "astar_vs_dijkstra": {
+      "sampled_starts": 300,
+      "exact_status_and_path_cost_matches": 300,
+      "exact_match_rate": 1.0,
+      "astar_mean_expansions": 29.826666666666668,
+      "dijkstra_mean_expansions": 29.933333333333334,
+      "expansion_reduction": 0.0035634743875277985
+    },
+    "strict_local_edge": {
+      "plays": 22,
+      "wins": 16,
+      "losses": 6,
+      "dates": 3,
+      "hit_rate": 0.7272727272727273,
+      "mean_no_vig_market_probability": 0.605527614437881,
+      "realized_residual": 0.12174511283484635,
+      "net_units": 4.7834645791766714,
+      "roi_per_play": 0.21743020814439415,
+      "market_brier": 0.24204539306777778,
+      "empirical_brier": 0.22311211904115222,
+      "poisson_binomial_tail_p": 0.1629648296903954,
+      "residual_ci95": [
+        -0.028769391125136767,
+        0.3120236238200951
+      ],
+      "roi_ci95": [
+        0.03968844775296388,
+        0.4907867337127268
+      ]
+    },
+    "astar_path_edge": {
+      "plays": 37,
+      "wins": 25,
+      "losses": 12,
+      "dates": 3,
+      "hit_rate": 0.6756756756756757,
+      "mean_no_vig_market_probability": 0.5416540384563939,
+      "realized_residual": 0.13402163721928173,
+      "net_units": 6.525223997282363,
+      "roi_per_play": 0.17635740533195576,
+      "market_brier": 0.20209181986099953,
+      "empirical_brier": 0.1842347313524848,
+      "poisson_binomial_tail_p": 0.06104667589976371,
+      "residual_ci95": [
+        -0.04393705338521803,
+        0.17545730850184826
+      ],
+      "roi_ci95": [
+        -0.00456989247311833,
+        0.22283419487084474
+      ]
+    },
+    "astar_incremental_additions": {
+      "plays": 21,
+      "wins": 12,
+      "losses": 9,
+      "dates": 3,
+      "hit_rate": 0.5714285714285714,
+      "mean_no_vig_market_probability": 0.5077374897432921,
+      "realized_residual": 0.06369108168527926,
+      "net_units": 0.4489554478823683,
+      "roi_per_play": 0.021378830851541346,
+      "market_brier": 0.19281557611783473,
+      "empirical_brier": 0.19994449037424258,
+      "poisson_binomial_tail_p": 0.35069925570706684,
+      "residual_ci95": [
+        -0.4379562043795621,
+        0.11482972827499038
+      ],
+      "roi_ci95": [
+        -1.0,
+        0.09939017504234895
+      ]
+    },
+    "selection_overlap": {
+      "strict_contracts": 22,
+      "astar_contracts": 37,
+      "overlap_contracts": 16,
+      "astar_added_contracts": 21
+    },
+    "astar_by_target": {
+      "K": {
+        "plays": 1,
+        "wins": 1,
+        "losses": 0,
+        "dates": 1,
+        "hit_rate": 1.0,
+        "mean_no_vig_market_probability": 0.5023923444976077,
+        "realized_residual": 0.4976076555023923,
+        "net_units": 1.08,
+        "roi_per_play": 1.08,
+        "market_brier": 0.2476133788145875,
+        "empirical_brier": 0.12937770284381583,
+        "poisson_binomial_tail_p": 0.5023923444976077,
+        "residual_ci95": [
+          null,
+          null
+        ],
+        "roi_ci95": [
+          null,
+          null
+        ]
+      },
+      "R": {
+        "plays": 29,
+        "wins": 20,
+        "losses": 9,
+        "dates": 3,
+        "hit_rate": 0.6896551724137931,
+        "mean_no_vig_market_probability": 0.5640142324566475,
+        "realized_residual": 0.12564093995714565,
+        "net_units": 4.401128709140833,
+        "roi_per_play": 0.1517630589358908,
+        "market_brier": 0.1964533637729202,
+        "empirical_brier": 0.1840172628032647,
+        "poisson_binomial_tail_p": 0.10766183716314204,
+        "residual_ci95": [
+          -0.10957092854021366,
+          0.20633540633196346
+        ],
+        "roi_ci95": [
+          -0.12185483870967745,
+          0.2241406574791668
+        ]
+      },
+      "TB": {
+        "plays": 7,
+        "wins": 4,
+        "losses": 3,
+        "dates": 3,
+        "hit_rate": 0.5714285714285714,
+        "mean_no_vig_market_probability": 0.4546277624494553,
+        "realized_residual": 0.1168008089791161,
+        "net_units": 1.0440952881415306,
+        "roi_per_play": 0.1491564697345044,
+        "market_brier": 0.21894805808967302,
+        "empirical_brier": 0.1929723908433494,
+        "poisson_binomial_tail_p": 0.3993151260240574,
+        "residual_ci95": [
+          -0.39371782113961845,
+          0.2591655225359711
+        ],
+        "roi_ci95": [
+          -1.0,
+          0.3960238220353827
+        ]
+      }
+    },
+    "astar_by_side": {
+      "OVER": {
+        "plays": 21,
+        "wins": 11,
+        "losses": 10,
+        "dates": 3,
+        "hit_rate": 0.5238095238095238,
+        "mean_no_vig_market_probability": 0.4244177271479569,
+        "realized_residual": 0.09939179666156694,
+        "net_units": 3.5,
+        "roi_per_play": 0.16666666666666666,
+        "market_brier": 0.2531708393691713,
+        "empirical_brier": 0.24117686505767838,
+        "poisson_binomial_tail_p": 0.24001491638883202,
+        "residual_ci95": [
+          0.05776791008802068,
+          0.24750309210139032
+        ],
+        "roi_ci95": [
+          0.04500000000000004,
+          0.5499999999999999
+        ]
+      },
+      "UNDER": {
+        "plays": 16,
+        "wins": 14,
+        "losses": 2,
+        "dates": 3,
+        "hit_rate": 0.875,
+        "mean_no_vig_market_probability": 0.6955266970487175,
+        "realized_residual": 0.1794733029512825,
+        "net_units": 3.025223997282364,
+        "roi_per_play": 0.18907649983014774,
+        "market_brier": 0.1350506067565242,
+        "empirical_brier": 0.10949818086441823,
+        "poisson_binomial_tail_p": 0.09042008041349757,
+        "residual_ci95": [
+          -0.3353771988718262,
+          0.336314714167086
+        ],
+        "roi_ci95": [
+          -0.5591397849462366,
+          0.42993115604110566
+        ]
+      }
+    }
+  },
+  "market_structure_only": {
+    "features": [
+      "log_Market_Books",
+      "Market_Line",
+      "Market_Line_Std",
+      "Is_Home",
+      "is_pitcher",
+      "no_vig_market_probability"
+    ],
+    "pca_explained_variance_sum": 0.8174131506290246,
+    "development_edge_goal_nodes": 41,
+    "astar_vs_dijkstra": {
+      "sampled_starts": 300,
+      "exact_status_and_path_cost_matches": 300,
+      "exact_match_rate": 1.0,
+      "astar_mean_expansions": 17.863333333333333,
+      "dijkstra_mean_expansions": 17.873333333333335,
+      "expansion_reduction": 0.0005594927265946126
+    },
+    "strict_local_edge": {
+      "plays": 15,
+      "wins": 9,
+      "losses": 6,
+      "dates": 3,
+      "hit_rate": 0.6,
+      "mean_no_vig_market_probability": 0.5929113300036186,
+      "realized_residual": 0.007088669996381358,
+      "net_units": -1.2868598185174416,
+      "roi_per_play": -0.08579065456782944,
+      "market_brier": 0.20684288477225996,
+      "empirical_brier": 0.2361224279931148,
+      "poisson_binomial_tail_p": 0.5893319340309155,
+      "residual_ci95": [
+        -0.34920634920634913,
+        0.12980313146861155
+      ],
+      "roi_ci95": [
+        -1.0,
+        0.14569014173293887
+      ]
+    },
+    "astar_path_edge": {
+      "plays": 23,
+      "wins": 13,
+      "losses": 10,
+      "dates": 3,
+      "hit_rate": 0.5652173913043478,
+      "mean_no_vig_market_probability": 0.609388151989432,
+      "realized_residual": -0.04417076068508419,
+      "net_units": -3.0872583305866654,
+      "roi_per_play": -0.13422862306898545,
+      "market_brier": 0.2279258917275369,
+      "empirical_brier": 0.26620377078895624,
+      "poisson_binomial_tail_p": 0.7474665289832005,
+      "residual_ci95": [
+        -0.19167827979058016,
+        0.07474749479568532
+      ],
+      "roi_ci95": [
+        -0.4165217391304348,
+        0.08626481372108559
+      ]
+    },
+    "astar_incremental_additions": {
+      "plays": 11,
+      "wins": 6,
+      "losses": 5,
+      "dates": 3,
+      "hit_rate": 0.5454545454545454,
+      "mean_no_vig_market_probability": 0.6149449165045312,
+      "realized_residual": -0.06949037104998579,
+      "net_units": -1.9081689142558709,
+      "roi_per_play": -0.17346990129598827,
+      "market_brier": 0.22841794993991818,
+      "empirical_brier": 0.26529183482624924,
+      "poisson_binomial_tail_p": 0.790653028534527,
+      "residual_ci95": [
+        -0.19167827979058016,
+        0.11379073825714581
+      ],
+      "roi_ci95": [
+        -0.4165217391304348,
+        0.16769726247987116
+      ]
+    },
+    "selection_overlap": {
+      "strict_contracts": 15,
+      "astar_contracts": 23,
+      "overlap_contracts": 12,
+      "astar_added_contracts": 11
+    },
+    "astar_by_target": {
+      "K": {
+        "plays": 2,
+        "wins": 2,
+        "losses": 0,
+        "dates": 1,
+        "hit_rate": 1.0,
+        "mean_no_vig_market_probability": 0.4527437208290223,
+        "realized_residual": 0.5472562791709776,
+        "net_units": 2.24,
+        "roi_per_play": 1.12,
+        "market_brier": 0.2998302239580178,
+        "empirical_brier": 0.15143616121496176,
+        "poisson_binomial_tail_p": 0.20463608788415305,
+        "residual_ci95": [
+          null,
+          null
+        ],
+        "roi_ci95": [
+          null,
+          null
+        ]
+      },
+      "R": {
+        "plays": 21,
+        "wins": 11,
+        "losses": 10,
+        "dates": 3,
+        "hit_rate": 0.5238095238095238,
+        "mean_no_vig_market_probability": 0.6243066692428043,
+        "realized_residual": -0.10049714543328048,
+        "net_units": -5.327258330586666,
+        "roi_per_play": -0.2536789681231746,
+        "market_brier": 0.22107786008653876,
+        "empirical_brier": 0.27713401931981285,
+        "poisson_binomial_tail_p": 0.8825178855318772,
+        "residual_ci95": [
+          -0.19167827979058016,
+          -0.060255015025826975
+        ],
+        "roi_ci95": [
+          -0.4165217391304348,
+          -0.20908809664431854
+        ]
+      }
+    },
+    "astar_by_side": {
+      "OVER": {
+        "plays": 2,
+        "wins": 2,
+        "losses": 0,
+        "dates": 1,
+        "hit_rate": 1.0,
+        "mean_no_vig_market_probability": 0.4527437208290223,
+        "realized_residual": 0.5472562791709776,
+        "net_units": 2.24,
+        "roi_per_play": 1.12,
+        "market_brier": 0.2998302239580178,
+        "empirical_brier": 0.15143616121496176,
+        "poisson_binomial_tail_p": 0.20463608788415305,
+        "residual_ci95": [
+          null,
+          null
+        ],
+        "roi_ci95": [
+          null,
+          null
+        ]
+      },
+      "UNDER": {
+        "plays": 21,
+        "wins": 11,
+        "losses": 10,
+        "dates": 3,
+        "hit_rate": 0.5238095238095238,
+        "mean_no_vig_market_probability": 0.6243066692428043,
+        "realized_residual": -0.10049714543328048,
+        "net_units": -5.327258330586666,
+        "roi_per_play": -0.2536789681231746,
+        "market_brier": 0.22107786008653876,
+        "empirical_brier": 0.27713401931981285,
+        "poisson_binomial_tail_p": 0.8825178855318772,
+        "residual_ci95": [
+          -0.19167827979058016,
+          -0.060255015025826975
+        ],
+        "roi_ci95": [
+          -0.4165217391304348,
+          -0.20908809664431854
+        ]
+      }
+    }
+  },
+  "market_core_only": {
+    "features": [
+      "log_Market_Books",
+      "Market_Line",
+      "Market_Line_Std",
+      "no_vig_market_probability"
+    ],
+    "pca_explained_variance_sum": 1.0000000000000002,
+    "development_edge_goal_nodes": 28,
+    "astar_vs_dijkstra": {
+      "sampled_starts": 300,
+      "exact_status_and_path_cost_matches": 300,
+      "exact_match_rate": 1.0,
+      "astar_mean_expansions": 19.02,
+      "dijkstra_mean_expansions": 19.02,
+      "expansion_reduction": 0.0
+    },
+    "strict_local_edge": {
+      "plays": 11,
+      "wins": 9,
+      "losses": 2,
+      "dates": 2,
+      "hit_rate": 0.8181818181818182,
+      "mean_no_vig_market_probability": 0.662108152748488,
+      "realized_residual": 0.15607366543333023,
+      "net_units": 1.814712078902986,
+      "roi_per_play": 0.16497382535481692,
+      "market_brier": 0.17527575742969448,
+      "empirical_brier": 0.15202302683515861,
+      "poisson_binomial_tail_p": 0.22308949817976287,
+      "residual_ci95": [
+        0.14250282329706943,
+        0.2917820867959372
+      ],
+      "roi_ci95": [
+        0.14757290280555282,
+        0.3389830508474576
+      ]
+    },
+    "astar_path_edge": {
+      "plays": 20,
+      "wins": 11,
+      "losses": 9,
+      "dates": 3,
+      "hit_rate": 0.55,
+      "mean_no_vig_market_probability": 0.6492010734390624,
+      "realized_residual": -0.09920107343906237,
+      "net_units": -4.26197813399374,
+      "roi_per_play": -0.21309890669968698,
+      "market_brier": 0.24591930194072692,
+      "empirical_brier": 0.29180762322292314,
+      "poisson_binomial_tail_p": 0.8781889112943215,
+      "residual_ci95": [
+        -0.3769032159338279,
+        0.12601883413432458
+      ],
+      "roi_ci95": [
+        -0.6417233560090703,
+        0.1292476697839476
+      ]
+    },
+    "astar_incremental_additions": {
+      "plays": 11,
+      "wins": 4,
+      "losses": 7,
+      "dates": 2,
+      "hit_rate": 0.36363636363636365,
+      "mean_no_vig_market_probability": 0.6471082705445609,
+      "realized_residual": -0.28347190690819724,
+      "net_units": -5.425207162049268,
+      "roi_per_play": -0.49320065109538797,
+      "market_brier": 0.2872807537831503,
+      "empirical_brier": 0.38224414238825166,
+      "poisson_binomial_tail_p": 0.9877576693140271,
+      "residual_ci95": [
+        -0.3769032159338279,
+        -0.11996711611334354
+      ],
+      "roi_ci95": [
+        -0.6417233560090703,
+        -0.2332859174964438
+      ]
+    },
+    "selection_overlap": {
+      "strict_contracts": 11,
+      "astar_contracts": 20,
+      "overlap_contracts": 9,
+      "astar_added_contracts": 11
+    },
+    "astar_by_target": {
+      "R": {
+        "plays": 19,
+        "wins": 11,
+        "losses": 8,
+        "dates": 3,
+        "hit_rate": 0.5789473684210527,
+        "mean_no_vig_market_probability": 0.6537211942888775,
+        "realized_residual": -0.07477382586782488,
+        "net_units": -3.2619781339937393,
+        "roi_per_play": -0.171683059683881,
+        "market_brier": 0.24216094705074395,
+        "empirical_brier": 0.2820559091183869,
+        "poisson_binomial_tail_p": 0.8251466063041732,
+        "residual_ci95": [
+          -0.34583395570737013,
+          0.12601883413432458
+        ],
+        "roi_ci95": [
+          -0.5820105820105821,
+          0.1292476697839476
+        ]
+      },
+      "TB": {
+        "plays": 1,
+        "wins": 0,
+        "losses": 1,
+        "dates": 1,
+        "hit_rate": 0.0,
+        "mean_no_vig_market_probability": 0.5633187772925764,
+        "realized_residual": -0.5633187772925764,
+        "net_units": -1.0,
+        "roi_per_play": -1.0,
+        "market_brier": 0.3173280448504033,
+        "empirical_brier": 0.4770901912091131,
+        "poisson_binomial_tail_p": 1.0,
+        "residual_ci95": [
+          null,
+          null
+        ],
+        "roi_ci95": [
+          null,
+          null
+        ]
+      }
+    },
+    "astar_by_side": {
+      "UNDER": {
+        "plays": 20,
+        "wins": 11,
+        "losses": 9,
+        "dates": 3,
+        "hit_rate": 0.55,
+        "mean_no_vig_market_probability": 0.6492010734390624,
+        "realized_residual": -0.09920107343906237,
+        "net_units": -4.26197813399374,
+        "roi_per_play": -0.21309890669968698,
+        "market_brier": 0.24591930194072692,
+        "empirical_brier": 0.29180762322292314,
+        "poisson_binomial_tail_p": 0.8781889112943215,
+        "residual_ci95": [
+          -0.3769032159338279,
+          0.12601883413432458
+        ],
+        "roi_ci95": [
+          -0.6417233560090703,
+          0.1292476697839476
+        ]
+      }
+    }
+  }
+}
