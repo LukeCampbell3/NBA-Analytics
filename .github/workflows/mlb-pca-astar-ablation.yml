@@ -1,0 +1,106 @@
+name: MLB PCA A* Feature Ablation
+
+on:
+  push:
+    branches:
+      - mlb-pca-astar-edge-search
+    paths:
+      - '.github/workflows/mlb-pca-astar-ablation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  ablation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip numpy pandas scikit-learn
+      - name: Run frozen feature ablations
+        env:
+          PYTHONPATH: .
+        run: |
+          mkdir -p pca_astar_ablation_output
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          import sports.mlb.research.pca_edge_search.backtest_historical_universe_model_free as m
+
+          inp = Path('sports/mlb/data/predictions/calibration/historical_pool_universe_2026.csv')
+          out = Path('pca_astar_ablation_output')
+          m.SearchConfig.seed = 20260917
+
+          variants = {
+              'no_outcome_history': [
+                  'log_History_Rows',
+                  'days_since_history',
+                  'log_Market_Books',
+                  'Market_Line',
+                  'Market_Line_Std',
+                  'Is_Home',
+                  'is_pitcher',
+                  'no_vig_market_probability',
+              ],
+              'market_structure_only': [
+                  'log_Market_Books',
+                  'Market_Line',
+                  'Market_Line_Std',
+                  'Is_Home',
+                  'is_pitcher',
+                  'no_vig_market_probability',
+              ],
+              'market_core_only': [
+                  'log_Market_Books',
+                  'Market_Line',
+                  'Market_Line_Std',
+                  'no_vig_market_probability',
+              ],
+          }
+
+          compact = {}
+          for name, features in variants.items():
+              print(f'=== {name} ===')
+              m.FEATURES = list(features)
+              summary = out / f'{name}_summary.json'
+              rows = out / f'{name}_scored_rows.csv'
+              m.run(inp, summary, rows)
+              report = json.loads(summary.read_text())
+              compact[name] = {
+                  'features': report['features'],
+                  'pca_explained_variance_sum': report['pca_explained_variance_sum'],
+                  'development_edge_goal_nodes': report['development_edge_goal_nodes'],
+                  'astar_vs_dijkstra': report['astar_vs_dijkstra'],
+                  'strict_local_edge': report['holdout']['strict_local_edge'],
+                  'astar_path_edge': report['holdout']['astar_path_edge'],
+                  'astar_incremental_additions': report['holdout']['astar_incremental_additions'],
+                  'selection_overlap': report['holdout']['selection_overlap'],
+                  'astar_by_target': report['holdout']['astar_by_target'],
+                  'astar_by_side': report['holdout']['astar_by_side'],
+              }
+
+          (out / 'ablation_compact.json').write_text(json.dumps(compact, indent=2) + '\n')
+          print(json.dumps(compact, indent=2))
+          PY
+      - name: Persist compact summary
+        run: |
+          mkdir -p sports/mlb/data/evaluation/pca_astar_edge
+          cp pca_astar_ablation_output/ablation_compact.json \
+             sports/mlb/data/evaluation/pca_astar_edge/ablation_compact.json
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add sports/mlb/data/evaluation/pca_astar_edge/ablation_compact.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'research: record PCA A* feature ablations [skip ci]'
+            git push
+          fi
+      - name: Upload ablation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlb-pca-astar-feature-ablation
+          path: pca_astar_ablation_output/
