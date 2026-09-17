@@ -79,15 +79,15 @@ def run(input_json: Path, output_json: Path) -> dict[str, Any]:
             )
         )
 
-    certified_search = LPAParlaySearch(valuations, policy=policy, mode="certified")
+    robust_search = LPAParlaySearch(valuations, policy=policy, mode="robust")
     shadow_search = LPAParlaySearch(valuations, policy=policy, mode="shadow")
     result = {
         "system": "MLB_ROBUST_PARLAY_LPA_SHADOW_V1",
         "production_authorized": False,
-        "note": "Research/shadow output only. LPA* selects among already-valued pairs; it does not estimate outcome probabilities.",
+        "note": "Research/shadow output only. LPA* selects among already-valued pairs; it does not estimate outcome probabilities or certify policy support.",
         "counts": {},
         "valuations": [v.as_dict() for v in valuations],
-        "certified_search": certified_search.result().as_dict(),
+        "robust_search": robust_search.result().as_dict(),
         "shadow_search": shadow_search.result().as_dict(),
     }
     for value in valuations:
