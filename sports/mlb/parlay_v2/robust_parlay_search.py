@@ -21,7 +21,7 @@ from typing import Any, Iterable, Sequence
 
 import numpy as np
 
-CERTIFIED_PAIR = "CERTIFIED_PAIR"
+ROBUST_PAIR_CANDIDATE = "ROBUST_PAIR_CANDIDATE"
 PROBABLE_PAIR = "PROBABLE_PAIR"
 LOTTERY_TAIL = "LOTTERY_TAIL"
 UNSUPPORTED = "UNSUPPORTED"
@@ -79,8 +79,8 @@ class RobustParlayPolicy:
     uncertainty_penalty: float = 0.50
     dependency_penalty: float = 0.25
     concentration_penalty: float = 0.25
-    require_pipeline_samples_for_certified: bool = True
-    require_pca_certificate_for_certified: bool = True
+    require_pipeline_samples_for_robust: bool = True
+    require_pca_certificate_for_robust: bool = True
     random_seed: int = 20260917
     utility_scale: float = 0.01
 
@@ -155,9 +155,6 @@ def _resample_probability(
     if supplied.size >= 20:
         idx = rng.integers(0, supplied.size, size=draws)
         return supplied[idx], True
-
-    # Research fallback only. This is deliberately not considered explicit
-    # pipeline uncertainty for CERTIFIED_PAIR unless policy opts in.
     p = _clip_probability(evidence.mean_probability)
     n = max(int(evidence.effective_support), 2)
     alpha = 0.5 + p * n
@@ -224,7 +221,6 @@ def _joint_samples(
         p1 = leg_1_samples[rng.permutation(draws)]
         p2 = leg_2_samples[rng.permutation(draws)]
         return p1 * p2, mode, min(draws, int(dependency.support_count or draws)), True, None
-
     if mode == "JOINT_SAMPLES":
         vals = np.asarray(tuple(dependency.joint_probability_samples), dtype=float)
         vals = vals[np.isfinite(vals)]
@@ -233,7 +229,6 @@ def _joint_samples(
             return None, mode, int(vals.size), False, "INSUFFICIENT_JOINT_PROBABILITY_SAMPLES"
         idx = rng.integers(0, vals.size, size=draws)
         return vals[idx], mode, int(dependency.support_count or vals.size), True, None
-
     if mode == "COMMON_WORLD":
         worlds = np.asarray(tuple(tuple(r) for r in dependency.common_world_outcomes), dtype=float)
         if worlds.ndim != 2 or worlds.shape[1] != 2 or worlds.shape[0] < 20:
@@ -247,7 +242,6 @@ def _joint_samples(
         losses = int(both.size - wins)
         vals = rng.beta(wins + 0.5, losses + 0.5, size=draws)
         return vals, mode, int(dependency.support_count or worlds.shape[0]), True, None
-
     return None, mode, 0, False, "DEPENDENCY_UNSUPPORTED"
 
 
@@ -263,18 +257,11 @@ def value_two_leg_parlay(
     policy = policy or RobustParlayPolicy()
     pair_seed = (sum(ord(c) for c in str(pair_id)) + policy.random_seed) % (2**32 - 1)
     rng = np.random.default_rng(pair_seed)
-
     p1, p1_explicit = _resample_probability(leg_1, draws=policy.bootstrap_draws, rng=rng)
     p2, p2_explicit = _resample_probability(leg_2, draws=policy.bootstrap_draws, rng=rng)
     same_game = str(leg_1.game_id) == str(leg_2.game_id)
-
     p_joint_samples, joint_method, joint_support, dependency_supported, dependency_error = _joint_samples(
-        p1,
-        p2,
-        dependency,
-        same_game=same_game,
-        draws=policy.bootstrap_draws,
-        rng=rng,
+        p1, p2, dependency, same_game=same_game, draws=policy.bootstrap_draws, rng=rng
     )
 
     d_book = combined_decimal_price
@@ -286,8 +273,8 @@ def value_two_leg_parlay(
     evidence_support = min(int(leg_1.effective_support), int(leg_2.effective_support))
     pca_certified = bool(leg_1.pca_edge_certified and leg_2.pca_edge_certified)
     explicit_pipeline_uncertainty = bool(p1_explicit and p2_explicit and dependency_supported)
-
     reasons: list[str] = []
+
     if p_joint_samples is None:
         reasons.append(dependency_error or "NO_JOINT_DISTRIBUTION")
         independent_samples = np.clip(p1 * p2, 1e-9, 1.0 - 1e-9)
@@ -357,9 +344,9 @@ def value_two_leg_parlay(
         reasons.append("INSUFFICIENT_JOINT_SUPPORT")
     if dependency_burden > policy.max_dependency_burden:
         reasons.append("DEPENDENCY_BURDEN_TOO_HIGH")
-    if policy.require_pca_certificate_for_certified and not pca_certified:
+    if policy.require_pca_certificate_for_robust and not pca_certified:
         reasons.append("PCA_EDGE_NOT_CERTIFIED")
-    if policy.require_pipeline_samples_for_certified and not explicit_pipeline_uncertainty:
+    if policy.require_pipeline_samples_for_robust and not explicit_pipeline_uncertainty:
         reasons.append("PIPELINE_UNCERTAINTY_SAMPLES_REQUIRED")
 
     base_growth = growth_advantage if growth_advantage is not None else -1.0
@@ -377,15 +364,15 @@ def value_two_leg_parlay(
         or (same_game and joint_support < policy.min_joint_support)
     )
     lottery = p_joint < policy.lottery_joint_probability
-    certified_tests = [
+    robust_tests = [
         ev_lcb is not None and ev_lcb > 0.0,
         p_ev_positive is not None and p_ev_positive >= policy.p_ev_positive_threshold,
         p_joint >= policy.min_joint_mean_probability,
         p_loss <= policy.max_loss_probability,
         dependency_burden <= policy.max_dependency_burden,
         growth_advantage is not None and growth_advantage > 0.0,
-        (pca_certified or not policy.require_pca_certificate_for_certified),
-        (explicit_pipeline_uncertainty or not policy.require_pipeline_samples_for_certified),
+        (pca_certified or not policy.require_pca_certificate_for_robust),
+        (explicit_pipeline_uncertainty or not policy.require_pipeline_samples_for_robust),
     ]
 
     if hard_unsupported:
@@ -393,9 +380,9 @@ def value_two_leg_parlay(
     elif lottery:
         classification = LOTTERY_TAIL
         reasons.append("LOW_JOINT_PROBABILITY")
-    elif all(certified_tests):
-        classification = CERTIFIED_PAIR
-        reasons.append("ROBUST_CERTIFICATE_PASSED")
+    elif all(robust_tests):
+        classification = ROBUST_PAIR_CANDIDATE
+        reasons.append("ROBUST_RISK_GATES_PASSED")
     elif ev_mean is not None and ev_mean > 0.0:
         classification = PROBABLE_PAIR
         if ev_lcb is not None and ev_lcb <= 0.0:
@@ -442,20 +429,12 @@ def value_two_leg_parlay(
 
 
 class LPAParlaySearch:
-    """Incremental shortest-path selector over pre-valued two-leg parlays.
-
-    Graph topology:
-        START -> canonical first-leg node -> pair node -> GOAL.
-
-    Pair->GOAL cost is a positive monotone transform of robust_utility, so
-    shortest path is the highest-utility admissible pair. LPA* uses h=0,
-    which is admissible and keeps search correctness independent of learning.
-    """
+    """Incremental shortest-path selector over pre-valued two-leg parlays."""
 
     START = "START"
     GOAL = "GOAL"
 
-    def __init__(self, valuations: Iterable[RobustParlayValuation], *, policy: RobustParlayPolicy | None = None, mode: str = "certified"):
+    def __init__(self, valuations: Iterable[RobustParlayValuation], *, policy: RobustParlayPolicy | None = None, mode: str = "robust"):
         self.policy = policy or RobustParlayPolicy()
         self.mode = mode
         self.valuations: dict[str, RobustParlayValuation] = {v.pair_id: v for v in valuations}
@@ -471,10 +450,10 @@ class LPAParlaySearch:
         self._initialize()
 
     def _eligible(self, v: RobustParlayValuation) -> bool:
-        if self.mode == "certified":
-            return v.classification == CERTIFIED_PAIR
+        if self.mode in {"robust", "certified"}:
+            return v.classification == ROBUST_PAIR_CANDIDATE
         if self.mode == "shadow":
-            return v.classification in {CERTIFIED_PAIR, PROBABLE_PAIR}
+            return v.classification in {ROBUST_PAIR_CANDIDATE, PROBABLE_PAIR}
         if self.mode == "all_supported":
             return v.classification != UNSUPPORTED
         raise ValueError(f"unknown mode: {self.mode}")
@@ -629,7 +608,7 @@ def value_and_search(
     pair_inputs: Iterable[tuple[str, LegProbabilityEvidence, LegProbabilityEvidence, JointDependencyEvidence, float | None]],
     *,
     policy: RobustParlayPolicy | None = None,
-    mode: str = "certified",
+    mode: str = "robust",
 ) -> tuple[list[RobustParlayValuation], SearchResult]:
     policy = policy or RobustParlayPolicy()
     valuations = [
