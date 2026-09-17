@@ -3,7 +3,7 @@
 This layer deliberately separates **probability estimation** from **search**.
 
 ```text
-PCA edge/support certificate
+PCA edge/support evidence
         -> marginal probability distributions
         -> joint/dependence evidence
         -> robust pair valuation
@@ -33,7 +33,7 @@ Every pair reports:
 
 ## Probability uncertainty
 
-Upstream pipelines should provide bootstrap/posterior samples for each marginal probability. If no samples are supplied, the module can construct a beta approximation from the point estimate and effective support, but such a fallback is **not eligible for `CERTIFIED_PAIR` by default**.
+Upstream pipelines should provide bootstrap/posterior samples for each marginal probability. If no samples are supplied, the module can construct a beta approximation from the point estimate and effective support, but such a fallback is **not eligible for `ROBUST_PAIR_CANDIDATE` by default**.
 
 This prevents a high point estimate from masquerading as a high-confidence estimate.
 
@@ -48,11 +48,11 @@ Supported modes are:
 
 Same-game pairs can never use `INDEPENDENT` mode.
 
-## Classification
+## Research classifications
 
-`CERTIFIED_PAIR` requires, by default:
+`ROBUST_PAIR_CANDIDATE` means the proposal passed the robust risk gates. It is **not** policy certification and does not authorize staking. By default it requires:
 
-- both legs carry the PCA/A* edge certificate;
+- both legs carry the PCA/A* edge evidence flag;
 - minimum leg support;
 - explicit pipeline probability samples;
 - supported dependence treatment;
@@ -63,9 +63,9 @@ Same-game pairs can never use `INDEPENDENT` mode.
 - dependency burden within policy limit;
 - positive expected-log-growth advantage versus staking the same total exposure on the two singles separately.
 
-`PROBABLE_PAIR` has positive mean EV but misses at least one robust certificate requirement. It is shadow only.
+`PROBABLE_PAIR` has positive mean EV but misses at least one robust risk gate. It is shadow only.
 
-`LOTTERY_TAIL` has low joint probability and is never treated as a certified pair.
+`LOTTERY_TAIL` has low joint probability and is never treated as a robust pair candidate.
 
 `UNSUPPORTED` has missing/insufficient pricing, dependence, support, or non-positive mean EV.
 
@@ -92,6 +92,16 @@ The heuristic is `h=0`, so it is admissible. Search correctness therefore does n
 
 When an existing pair's price/probability/dependence evidence changes, only the affected pair-to-goal edge is updated and LPA* repairs the shortest path. A newly appearing pair changes topology and triggers a rebuild.
 
+## Exact-event bridge
+
+`robust_parlay_bridge.py` joins existing `PairCandidate` objects to PCA/A* probability evidence using the full event key:
+
+```text
+(player_id, game_id, target, side, line)
+```
+
+The bridge does not create missing evidence. Cross-game pairs may use the structural independence mode; same-game pairs with no joint/common-world evidence remain `UNSUPPORTED`. Missing PCA probability samples cannot silently become robust pair candidates.
+
 ## CLI
 
 ```bash
@@ -100,8 +110,8 @@ python -m sports.mlb.parlay_v2.run_robust_parlay_shadow \
   --output-json path/to/robust_pair_output.json
 ```
 
-The CLI is research/shadow only and always emits `production_authorized: false`.
+The CLI is research/shadow only, always emits `production_authorized: false`, and reports `robust_search` separately from the broader `shadow_search`.
 
 ## Production boundary
 
-This module does **not** change `run_parlay_v2.py`, the current certification state machine, or staking authorization. Promotion requires a separate locked chronological validation using exact pregame probability samples, exact executable prices, settlement identity, and common-world/dependence evidence where required.
+This module does **not** change `run_parlay_v2.py`, the current certification state machine, or staking authorization. The word `ROBUST_PAIR_CANDIDATE` intentionally does not mean policy certification. Promotion requires a separate locked chronological validation using exact pregame probability samples, exact executable prices, settlement identity, and common-world/dependence evidence where required. Only `sports/mlb/research/parlay_certification_v2/` can certify the policy under the existing repository governance boundary.
