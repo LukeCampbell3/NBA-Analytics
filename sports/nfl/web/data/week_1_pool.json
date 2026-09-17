@@ -3,54 +3,29 @@
   "league": "NFL",
   "season": 2026,
   "week": 1,
-  "generated_at_utc": "2026-09-15T01:44:24.166066Z",
+  "generated_at_utc": "2026-09-17T01:39:59.235638Z",
   "status": "projection_pool_ready",
-  "market_status": "lines_available",
-  "market_observations": 131,
+  "market_status": "awaiting_lines",
+  "market_observations": 0,
   "market_audit": {
-    "provider": "rotowire_public_nfl_props",
-    "sport_key": "americanfootball_nfl",
-    "source_url": "https://www.rotowire.com/betting/nfl/player-props.php",
-    "fetched_at_utc": "2026-09-15T01:40:51.891809+00:00",
-    "rotowire_week": 1,
-    "bundle_rows": {
-      "passyds": 2,
-      "recyds": 16,
-      "rushyds": 7
-    },
-    "observations_by_market": {
-      "player_reception_yds": 81,
-      "player_rush_yds": 37,
-      "player_pass_yds": 13
-    },
-    "observations_by_book": {
-      "betr": 23,
-      "betrivers": 8,
-      "caesars": 17,
-      "draftkings": 25,
-      "fanduel": 23,
-      "hardrock": 17,
-      "thescore": 18
-    },
-    "complete_two_sided_rows": 131,
-    "first_td_best_prices": [],
-    "markets": [
-      "player_pass_yds",
-      "player_reception_yds",
-      "player_rush_yds"
-    ],
-    "regions": "public_rotowire_scrape",
-    "raw_source_sha256": null,
-    "status": "success",
+    "provider": "provider_chain",
+    "status": "no_props",
+    "fetched_at_utc": "2026-08-13T14:01:37.727617+00:00",
+    "complete_two_sided_rows": 0,
     "provider_attempts": [
       {
-        "provider": "rotowire",
-        "status": "success",
-        "complete_two_sided_rows": 131,
-        "events_discovered": null,
-        "events_with_odds": null
+        "provider": "sportsgameodds",
+        "status": "no_props",
+        "complete_two_sided_rows": 0,
+        "events_discovered": 16,
+        "events_with_odds": 16
+      },
+      {
+        "provider": "the_odds_api",
+        "status": "missing_credentials"
       }
-    ]
+    ],
+    "raw_source_sha256": null
   },
   "games": 16,
   "players": 200,
@@ -1599,6 +1574,27 @@
       "projection_rank": 31
     },
     {
+      "player_id": "00-0035250",
+      "player": "Devin Singletary",
+      "team": "NYG",
+      "opponent": "DAL",
+      "venue": "home",
+      "game_id": "2026_01_DAL_NYG",
+      "kickoff_utc": "2026-09-14T00:20:00Z",
+      "position": "RB",
+      "depth_rank": 2,
+      "depth_role": "RB2",
+      "target": "rushing_yards",
+      "target_label": "Rushing yards",
+      "projection": 36.2,
+      "p10": 14.2,
+      "median": 36.0,
+      "p90": 77.4,
+      "market_line": null,
+      "market_status": "awaiting_two_sided_lines",
+      "projection_rank": 32
+    },
+    {
       "player_id": "00-0040730",
       "player": "RJ Harvey",
       "team": "DEN",
@@ -1617,7 +1613,7 @@
       "p90": 77.4,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 32
+      "projection_rank": 33
     },
     {
       "player_id": "00-0040784",
@@ -1638,7 +1634,7 @@
       "p90": 76.6,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 33
+      "projection_rank": 34
     },
     {
       "player_id": "00-0033906",
@@ -1659,7 +1655,7 @@
       "p90": 75.5,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 34
+      "projection_rank": 35
     },
     {
       "player_id": "00-0035685",
@@ -1680,7 +1676,7 @@
       "p90": 71.9,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 35
+      "projection_rank": 36
     },
     {
       "player_id": "00-0040236",
@@ -1701,7 +1697,7 @@
       "p90": 71.1,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 36
+      "projection_rank": 37
     },
     {
       "player_id": "00-0038555",
@@ -1720,27 +1716,6 @@
       "p10": 7.4,
       "median": 29.2,
       "p90": 70.6,
-      "market_line": null,
-      "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 37
-    },
-    {
-      "player_id": "00-0036893",
-      "player": "Najee Harris",
-      "team": "NYG",
-      "opponent": "DAL",
-      "venue": "home",
-      "game_id": "2026_01_DAL_NYG",
-      "kickoff_utc": "2026-09-14T00:20:00Z",
-      "position": "RB",
-      "depth_rank": 2,
-      "depth_role": "RB2",
-      "target": "rushing_yards",
-      "target_label": "Rushing yards",
-      "projection": 27.9,
-      "p10": 5.9,
-      "median": 27.7,
-      "p90": 69.1,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
       "projection_rank": 38
@@ -1956,8 +1931,8 @@
       "projection_rank": 48
     },
     {
-      "player_id": "00-0040162",
-      "player": "Dylan Sampson",
+      "player_id": "00-0040466",
+      "player": "Raheim Sanders",
       "team": "CLE",
       "opponent": "JAX",
       "venue": "away",
@@ -1968,10 +1943,10 @@
       "depth_role": "RB2",
       "target": "rushing_yards",
       "target_label": "Rushing yards",
-      "projection": 14.2,
+      "projection": 17.2,
       "p10": 0.0,
-      "median": 14.0,
-      "p90": 55.5,
+      "median": 17.0,
+      "p90": 58.4,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
       "projection_rank": 49
@@ -4169,8 +4144,8 @@
       "game_id": "2026_01_BUF_HOU",
       "kickoff_utc": "2026-09-13T17:00:00Z",
       "position": "WR",
-      "depth_rank": 3,
-      "depth_role": "WR3",
+      "depth_rank": 2,
+      "depth_role": "WR2",
       "target": "receiving_yards",
       "target_label": "Receiving yards",
       "projection": 18.3,
@@ -4253,8 +4228,8 @@
       "game_id": "2026_01_BUF_HOU",
       "kickoff_utc": "2026-09-13T17:00:00Z",
       "position": "WR",
-      "depth_rank": 2,
-      "depth_role": "WR2",
+      "depth_rank": 3,
+      "depth_role": "WR3",
       "target": "receiving_yards",
       "target_label": "Receiving yards",
       "projection": 17.7,
