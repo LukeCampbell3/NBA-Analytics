@@ -1,0 +1,521 @@
+{
+  "status": "NESTED_CHRONOLOGICAL_RESEARCH_BACKTEST",
+  "strategy": "MODEL_FREE_PCA_EDGE_DISTANCE_WITH_CALIBRATED_RESCUE_AND_TEMPORAL_PERSISTENCE",
+  "source": {
+    "source_rows": 242425,
+    "real_two_sided_contracts_before_dedupe": 2933,
+    "real_two_sided_contracts": 2933,
+    "expanded_side_states": 5866,
+    "unique_real_market_dates": 11,
+    "first_real_market_date": "2026-04-27",
+    "last_real_market_date": "2026-07-29",
+    "same_book_two_sided_contracts": 592
+  },
+  "config": {
+    "n_components": 4,
+    "graph_k": 8,
+    "local_k": 24,
+    "min_support": 20,
+    "edge_threshold": 0.03,
+    "shrinkage": 12.0,
+    "z_confidence": 1.645,
+    "ood_quantile": 0.95,
+    "path_radius_multiplier": 3.0,
+    "initial_train_dates": 4,
+    "same_book_max_quote_gap_minutes": 15.0
+  },
+  "features": [
+    "log_History_Rows",
+    "days_since_history",
+    "log_Market_Books",
+    "Market_Line",
+    "Market_Line_Std",
+    "Is_Home",
+    "is_pitcher",
+    "pt_prior_mean",
+    "pt_prior_std",
+    "line_minus_prior_mean",
+    "line_z",
+    "no_vig_market_probability"
+  ],
+  "split": {
+    "inner_train_dates": [
+      "2026-04-27",
+      "2026-04-28",
+      "2026-04-29",
+      "2026-05-01",
+      "2026-05-02",
+      "2026-06-19"
+    ],
+    "inner_validation_dates": [
+      "2026-06-20",
+      "2026-06-21"
+    ],
+    "outer_holdout_dates": [
+      "2026-06-26",
+      "2026-06-27",
+      "2026-07-29"
+    ]
+  },
+  "calibration": {
+    "floor_grid": [
+      0.0,
+      0.005,
+      0.01,
+      0.015,
+      0.02,
+      0.025,
+      0.03
+    ],
+    "selection_objective": "maximize worst validation-date ROI with >=10 plays and both inner validation dates represented; ties choose higher floor",
+    "base_selected_floor": 0.0,
+    "persistent_selected_floor": 0.03,
+    "base_grid": [
+      {
+        "floor": 0.0,
+        "plays": 14,
+        "roi": 0.3785951554895922,
+        "net_units": 5.300332176854291,
+        "by_date_roi": {
+          "2026-06-20": 0.25388641700655046,
+          "2026-06-21": 0.6030708847590674
+        },
+        "worst_date_roi": 0.25388641700655046,
+        "eligible_for_selection": true
+      },
+      {
+        "floor": 0.005,
+        "plays": 12,
+        "roi": 0.28711101473785766,
+        "net_units": 3.4453321768542917,
+        "by_date_roi": {
+          "2026-06-20": 0.061425393294136335,
+          "2026-06-21": 0.6030708847590674
+        },
+        "worst_date_roi": 0.061425393294136335,
+        "eligible_for_selection": true
+      },
+      {
+        "floor": 0.01,
+        "plays": 12,
+        "roi": 0.28711101473785766,
+        "net_units": 3.4453321768542917,
+        "by_date_roi": {
+          "2026-06-20": 0.061425393294136335,
+          "2026-06-21": 0.6030708847590674
+        },
+        "worst_date_roi": 0.061425393294136335,
+        "eligible_for_selection": true
+      },
+      {
+        "floor": 0.015,
+        "plays": 10,
+        "roi": 0.38001708865317113,
+        "net_units": 3.800170886531711,
+        "by_date_roi": {
+          "2026-06-20": 0.15696329254727476,
+          "2026-06-21": 0.6030708847590674
+        },
+        "worst_date_roi": 0.15696329254727476,
+        "eligible_for_selection": true
+      },
+      {
+        "floor": 0.02,
+        "plays": 9,
+        "roi": 0.5333523207257458,
+        "net_units": 4.800170886531712,
+        "by_date_roi": {
+          "2026-06-20": 0.44620411568409346,
+          "2026-06-21": 0.6030708847590674
+        },
+        "worst_date_roi": 0.44620411568409346,
+        "eligible_for_selection": false
+      },
+      {
+        "floor": 0.025,
+        "plays": 9,
+        "roi": 0.5333523207257458,
+        "net_units": 4.800170886531712,
+        "by_date_roi": {
+          "2026-06-20": 0.44620411568409346,
+          "2026-06-21": 0.6030708847590674
+        },
+        "worst_date_roi": 0.44620411568409346,
+        "eligible_for_selection": false
+      },
+      {
+        "floor": 0.03,
+        "plays": 8,
+        "roi": 0.7250213608164638,
+        "net_units": 5.800170886531711,
+        "by_date_roi": {
+          "2026-06-20": 0.928272154245458,
+          "2026-06-21": 0.6030708847590674
+        },
+        "worst_date_roi": 0.6030708847590674,
+        "eligible_for_selection": false
+      }
+    ],
+    "persistent_grid": [
+      {
+        "floor": 0.0,
+        "plays": 9,
+        "roi": 0.3048608089273819,
+        "net_units": 2.7437472803464367,
+        "by_date_roi": {
+          "2026-06-20": 0.14497378039091055,
+          "2026-06-21": 0.8644654088050314
+        },
+        "worst_date_roi": 0.14497378039091055,
+        "eligible_for_selection": false
+      },
+      {
+        "floor": 0.005,
+        "plays": 8,
+        "roi": 0.18921841004330456,
+        "net_units": 1.5137472803464365,
+        "by_date_roi": {
+          "2026-06-20": -0.035863922877271026,
+          "2026-06-21": 0.8644654088050314
+        },
+        "worst_date_roi": -0.035863922877271026,
+        "eligible_for_selection": false
+      },
+      {
+        "floor": 0.01,
+        "plays": 8,
+        "roi": 0.18921841004330456,
+        "net_units": 1.5137472803464365,
+        "by_date_roi": {
+          "2026-06-20": -0.035863922877271026,
+          "2026-06-21": 0.8644654088050314
+        },
+        "worst_date_roi": -0.035863922877271026,
+        "eligible_for_selection": false
+      },
+      {
+        "floor": 0.015,
+        "plays": 6,
+        "roi": 0.31143099833730936,
+        "net_units": 1.8685859900238562,
+        "by_date_roi": {
+          "2026-06-20": 0.034913793103448276,
+          "2026-06-21": 0.8644654088050314
+        },
+        "worst_date_roi": 0.034913793103448276,
+        "eligible_for_selection": false
+      },
+      {
+        "floor": 0.02,
+        "plays": 5,
+        "roi": 0.5737171980047712,
+        "net_units": 2.8685859900238557,
+        "by_date_roi": {
+          "2026-06-20": 0.3798850574712643,
+          "2026-06-21": 0.8644654088050314
+        },
+        "worst_date_roi": 0.3798850574712643,
+        "eligible_for_selection": false
+      },
+      {
+        "floor": 0.025,
+        "plays": 5,
+        "roi": 0.5737171980047712,
+        "net_units": 2.8685859900238557,
+        "by_date_roi": {
+          "2026-06-20": 0.3798850574712643,
+          "2026-06-21": 0.8644654088050314
+        },
+        "worst_date_roi": 0.3798850574712643,
+        "eligible_for_selection": false
+      },
+      {
+        "floor": 0.03,
+        "plays": 4,
+        "roi": 0.9671464975059639,
+        "net_units": 3.8685859900238557,
+        "by_date_roi": {
+          "2026-06-20": 1.0698275862068964,
+          "2026-06-21": 0.8644654088050314
+        },
+        "worst_date_roi": 0.8644654088050314,
+        "eligible_for_selection": false
+      }
+    ],
+    "inner_persistence": {
+      "base_edge_goal_nodes": 62,
+      "persistent_edge_goal_nodes": 21,
+      "persistent_fraction": 0.3387096774193548
+    }
+  },
+  "final_development_persistence": {
+    "base_edge_goal_nodes": 81,
+    "persistent_edge_goal_nodes": 57,
+    "persistent_fraction": 0.7037037037037037
+  },
+  "holdout": {
+    "strict_local_3pct": {
+      "plays": 82,
+      "wins": 38,
+      "losses": 44,
+      "dates": 3,
+      "hit_rate": 0.4634146341463415,
+      "mean_no_vig_market_probability": 0.44001501362043655,
+      "realized_residual": 0.02339962052590494,
+      "net_units": 2.744735817148755,
+      "roi_per_play": 0.0334723880140092,
+      "market_brier": 0.22390785116319317,
+      "empirical_brier": 0.2484261025597412,
+      "poisson_binomial_tail_p": 0.36275811495294813,
+      "residual_ci95": [
+        -0.1438227177131633,
+        0.12837972333045178
+      ],
+      "roi_ci95": [
+        -0.3169389985645356,
+        0.2582830225599447
+      ]
+    },
+    "current_astar_equivalent_floor_0": {
+      "plays": 43,
+      "wins": 21,
+      "losses": 22,
+      "dates": 3,
+      "hit_rate": 0.4883720930232558,
+      "mean_no_vig_market_probability": 0.5231334287917943,
+      "realized_residual": -0.03476133576853846,
+      "net_units": -4.779563001306872,
+      "roi_per_play": -0.11115262793736913,
+      "market_brier": 0.23292870167304247,
+      "empirical_brier": 0.2692741055623306,
+      "poisson_binomial_tail_p": 0.7369746635036407,
+      "residual_ci95": [
+        -0.07916590837341664,
+        0.028687656043518195
+      ],
+      "roi_ci95": [
+        -0.185797767138623,
+        -0.0011014527162785863
+      ]
+    },
+    "current_astar_incremental_additions": {
+      "plays": 16,
+      "wins": 6,
+      "losses": 10,
+      "dates": 3,
+      "hit_rate": 0.375,
+      "mean_no_vig_market_probability": 0.4605768679304896,
+      "realized_residual": -0.08557686793048958,
+      "net_units": -4.849602807738401,
+      "roi_per_play": -0.30310017548365004,
+      "market_brier": 0.18180013343856985,
+      "empirical_brier": 0.2292843202362459,
+      "poisson_binomial_tail_p": 0.8339575709448804,
+      "residual_ci95": [
+        -0.14982018148590875,
+        0.05613880924157677
+      ],
+      "roi_ci95": [
+        -0.39125000000000004,
+        -0.11952861952861953
+      ]
+    },
+    "calibrated_base_edge": {
+      "plays": 43,
+      "wins": 21,
+      "losses": 22,
+      "dates": 3,
+      "hit_rate": 0.4883720930232558,
+      "mean_no_vig_market_probability": 0.5231334287917943,
+      "realized_residual": -0.03476133576853846,
+      "net_units": -4.779563001306872,
+      "roi_per_play": -0.11115262793736913,
+      "market_brier": 0.23292870167304247,
+      "empirical_brier": 0.2692741055623306,
+      "poisson_binomial_tail_p": 0.7369746635036407,
+      "residual_ci95": [
+        -0.07916590837341664,
+        0.028687656043518195
+      ],
+      "roi_ci95": [
+        -0.185797767138623,
+        -0.0011014527162785863
+      ]
+    },
+    "calibrated_base_incremental_additions": {
+      "plays": 16,
+      "wins": 6,
+      "losses": 10,
+      "dates": 3,
+      "hit_rate": 0.375,
+      "mean_no_vig_market_probability": 0.4605768679304896,
+      "realized_residual": -0.08557686793048958,
+      "net_units": -4.849602807738401,
+      "roi_per_play": -0.30310017548365004,
+      "market_brier": 0.18180013343856985,
+      "empirical_brier": 0.2292843202362459,
+      "poisson_binomial_tail_p": 0.8339575709448804,
+      "residual_ci95": [
+        -0.14982018148590875,
+        0.05613880924157677
+      ],
+      "roi_ci95": [
+        -0.39125000000000004,
+        -0.11952861952861953
+      ]
+    },
+    "persistent_calibrated_edge": {
+      "plays": 17,
+      "wins": 9,
+      "losses": 8,
+      "dates": 3,
+      "hit_rate": 0.5294117647058824,
+      "mean_no_vig_market_probability": 0.5748640822988259,
+      "realized_residual": -0.04545231759294355,
+      "net_units": -2.4676495424033322,
+      "roi_per_play": -0.14515585543549014,
+      "market_brier": 0.2314100318191749,
+      "empirical_brier": 0.285696389002481,
+      "poisson_binomial_tail_p": 0.7417161631340489,
+      "residual_ci95": [
+        -0.20679819205745809,
+        0.0473554339832446
+      ],
+      "roi_ci95": [
+        -0.39321399946566926,
+        0.030344478216818647
+      ]
+    },
+    "persistent_incremental_additions": {
+      "plays": 0,
+      "dates": 0
+    },
+    "selection_counts": {
+      "strict": 82,
+      "current": 43,
+      "calibrated": 43,
+      "persistent": 17
+    },
+    "persistent_by_target": {
+      "ER": {
+        "plays": 1,
+        "wins": 1,
+        "losses": 0,
+        "dates": 1,
+        "hit_rate": 1.0,
+        "mean_no_vig_market_probability": 0.44260682670940954,
+        "realized_residual": 0.5573931732905905,
+        "net_units": 1.14,
+        "roi_per_play": 1.14,
+        "market_brier": 0.31068714963095423,
+        "empirical_brier": 0.15054474949643118,
+        "poisson_binomial_tail_p": 0.44260682670940954,
+        "residual_ci95": [
+          null,
+          null
+        ],
+        "roi_ci95": [
+          null,
+          null
+        ]
+      },
+      "R": {
+        "plays": 12,
+        "wins": 7,
+        "losses": 5,
+        "dates": 3,
+        "hit_rate": 0.5833333333333334,
+        "mean_no_vig_market_probability": 0.6421681099518431,
+        "realized_residual": -0.058834776618509776,
+        "net_units": -1.8576495424033321,
+        "roi_per_play": -0.154804128533611,
+        "market_brier": 0.23400808307614185,
+        "empirical_brier": 0.28914156659586476,
+        "poisson_binomial_tail_p": 0.7714333914713545,
+        "residual_ci95": [
+          -0.20679819205745809,
+          0.06529525447404361
+        ],
+        "roi_ci95": [
+          -0.39321399946566926,
+          0.05167451596023024
+        ]
+      },
+      "TB": {
+        "plays": 4,
+        "wins": 1,
+        "losses": 3,
+        "dates": 2,
+        "hit_rate": 0.25,
+        "mean_no_vig_market_probability": 0.4060163132371279,
+        "realized_residual": -0.1560163132371279,
+        "net_units": -1.75,
+        "roi_per_play": -0.4375,
+        "market_brier": 0.20379659859532911,
+        "empirical_brier": 0.3091487660988421,
+        "poisson_binomial_tail_p": 0.8756105415877039,
+        "residual_ci95": [
+          -0.3970248999478681,
+          0.08499227347361232
+        ],
+        "roi_ci95": [
+          -1.0,
+          0.125
+        ]
+      }
+    },
+    "persistent_by_side": {
+      "OVER": {
+        "plays": 5,
+        "wins": 2,
+        "losses": 3,
+        "dates": 2,
+        "hit_rate": 0.4,
+        "mean_no_vig_market_probability": 0.41333441593158415,
+        "realized_residual": -0.013334415931584132,
+        "net_units": -0.6100000000000001,
+        "roi_per_play": -0.12200000000000003,
+        "market_brier": 0.22517470880245413,
+        "empirical_brier": 0.2774279627783599,
+        "poisson_binomial_tail_p": 0.6858692839681865,
+        "residual_ci95": [
+          -0.07888554220171529,
+          0.08499227347361232
+        ],
+        "roi_ci95": [
+          -0.2866666666666667,
+          0.125
+        ]
+      },
+      "UNDER": {
+        "plays": 12,
+        "wins": 7,
+        "losses": 5,
+        "dates": 3,
+        "hit_rate": 0.5833333333333334,
+        "mean_no_vig_market_probability": 0.6421681099518431,
+        "realized_residual": -0.058834776618509776,
+        "net_units": -1.8576495424033321,
+        "roi_per_play": -0.154804128533611,
+        "market_brier": 0.23400808307614185,
+        "empirical_brier": 0.28914156659586476,
+        "poisson_binomial_tail_p": 0.7714333914713545,
+        "residual_ci95": [
+          -0.20679819205745809,
+          0.06529525447404361
+        ],
+        "roi_ci95": [
+          -0.39321399946566926,
+          0.05167451596023024
+        ]
+      }
+    }
+  },
+  "computational_note": "Reverse multi-source Dijkstra precomputes exact graph distance to all frozen edge goals once. This is equivalent to repeated shortest-path reachability queries but avoids per-candidate A*/Dijkstra expansions; a future dynamic graph can replace this static field with LPA*/D* Lite repair.",
+  "limitations": [
+    "Only 11 real-market dates exist in this corpus; the inner validation uses two dates and the final holdout uses three dates.",
+    "The rescue floor is selected only on inner development validation dates, never on the final holdout.",
+    "Temporal persistence is a pre-specified concentration/leave-one-date-out stress rule, not a tuned final-holdout filter.",
+    "This remains retrospective research and does not establish future profitability."
+  ]
+}
