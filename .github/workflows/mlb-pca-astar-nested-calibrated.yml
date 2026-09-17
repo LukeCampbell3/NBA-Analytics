@@ -1,0 +1,51 @@
+name: MLB PCA A* Nested Calibrated Edge Backtest
+
+on:
+  push:
+    branches:
+      - mlb-pca-astar-edge-search
+    paths:
+      - 'sports/mlb/research/pca_edge_search/nested_calibrated_edge_backtest.py'
+      - '.github/workflows/mlb-pca-astar-nested-calibrated.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  backtest:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip numpy pandas scikit-learn
+      - name: Run nested calibrated persistent-edge backtest
+        env:
+          PYTHONPATH: .
+        run: |
+          mkdir -p pca_astar_nested_output
+          python sports/mlb/research/pca_edge_search/nested_calibrated_edge_backtest.py \
+            --input sports/mlb/data/predictions/calibration/historical_pool_universe_2026.csv \
+            --output-json pca_astar_nested_output/nested_calibrated_summary.json \
+            --output-csv pca_astar_nested_output/nested_calibrated_scored_rows.csv
+      - name: Persist summary
+        run: |
+          mkdir -p sports/mlb/data/evaluation/pca_astar_edge
+          cp pca_astar_nested_output/nested_calibrated_summary.json \
+             sports/mlb/data/evaluation/pca_astar_edge/nested_calibrated_summary.json
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add sports/mlb/data/evaluation/pca_astar_edge/nested_calibrated_summary.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'research: record nested calibrated PCA edge backtest [skip ci]'
+            git push
+          fi
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlb-pca-astar-nested-calibrated
+          path: pca_astar_nested_output/
