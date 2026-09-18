@@ -5,7 +5,8 @@
       "available_sportsbooks": [
         "betr",
         "draftkings",
-        "fanduel"
+        "fanduel",
+        "hardrock"
       ],
       "calibrated_hit_probability": 0.658565,
       "candidate_authorized": false,
@@ -15,7 +16,7 @@
       "game_start_utc": "2026-09-20 17:00:00+00:00",
       "line": 206.5,
       "market": "player_pass_yds",
-      "market_books": 3,
+      "market_books": 4,
       "market_common_books": 2,
       "market_source": "rotowire_public_nfl_props",
       "meta_policy_score": 0.819237,
@@ -24,15 +25,19 @@
       "offers": {
         "betr": {
           "price": -116.0,
-          "snapshot_time_utc": "2026-09-17T01:35:36.557793+00:00"
+          "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00"
         },
         "draftkings": {
           "price": -111.0,
-          "snapshot_time_utc": "2026-09-17T01:35:36.557793+00:00"
+          "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00"
         },
         "fanduel": {
           "price": -114.0,
-          "snapshot_time_utc": "2026-09-17T01:35:36.557793+00:00"
+          "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00"
+        },
+        "hardrock": {
+          "price": -115.0,
+          "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00"
         }
       },
       "opponent": "TEN",
@@ -50,69 +55,15 @@
       ],
       "selected_side_price": -111.0,
       "selected_sportsbook_key": "draftkings",
-      "snapshot_time_utc": "2026-09-17T01:35:36.557793+00:00",
+      "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00",
       "target": "passing",
       "team": "PHI"
     },
     {
       "action_status": "review",
       "available_sportsbooks": [
-        "caesars",
-        "fanatics",
-        "hardrock"
-      ],
-      "calibrated_hit_probability": 0.658818,
-      "candidate_authorized": false,
-      "confidence_in_support": true,
-      "direction": "OVER",
-      "event_id": "2978640",
-      "game_start_utc": "2026-09-20 17:00:00+00:00",
-      "line": 205.5,
-      "market": "player_pass_yds",
-      "market_books": 3,
-      "market_common_books": 2,
-      "market_source": "rotowire_public_nfl_props",
-      "meta_policy_score": 0.815586,
-      "model_hit_probability": 0.658818,
-      "no_vig_probability": 0.50205,
-      "offers": {
-        "caesars": {
-          "price": -115.0,
-          "snapshot_time_utc": "2026-09-17T01:35:36.557793+00:00"
-        },
-        "fanatics": {
-          "price": -115.0,
-          "snapshot_time_utc": "2026-09-17T01:35:36.557793+00:00"
-        },
-        "hardrock": {
-          "price": -115.0,
-          "snapshot_time_utc": "2026-09-17T01:35:36.557793+00:00"
-        }
-      },
-      "opponent": "TEN",
-      "player": "Jalen Hurts",
-      "player_id": "00-0036389",
-      "policy_version": "nfl_passing_loss_aware_meta_policy_v2",
-      "position": "QB",
-      "price_age_seconds": 5,
-      "price_confirmed": true,
-      "probability_advantage": 0.156768,
-      "projection": 211.38,
-      "raw_model_probability": 0.658818,
-      "risk_flags": [
-        "prospective_certificate_inactive"
-      ],
-      "selected_side_price": -115.0,
-      "selected_sportsbook_key": "caesars",
-      "snapshot_time_utc": "2026-09-17T01:35:36.557793+00:00",
-      "target": "passing",
-      "team": "PHI"
-    },
-    {
-      "action_status": "review",
-      "available_sportsbooks": [
-        "caesars",
-        "fanatics",
+        "betr",
+        "draftkings",
         "fanduel",
         "hardrock"
       ],
@@ -125,27 +76,27 @@
       "line": 175.5,
       "market": "player_pass_yds",
       "market_books": 4,
-      "market_common_books": 3,
+      "market_common_books": 2,
       "market_source": "rotowire_public_nfl_props",
-      "meta_policy_score": 0.814465,
+      "meta_policy_score": 0.80645,
       "model_hit_probability": 0.652172,
-      "no_vig_probability": 0.489879,
+      "no_vig_probability": 0.497894,
       "offers": {
-        "caesars": {
-          "price": -114.0,
-          "snapshot_time_utc": "2026-09-17T01:35:36.557793+00:00"
+        "betr": {
+          "price": -119.0,
+          "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00"
         },
-        "fanatics": {
-          "price": -110.0,
-          "snapshot_time_utc": "2026-09-17T01:35:36.557793+00:00"
+        "draftkings": {
+          "price": -111.0,
+          "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00"
         },
         "fanduel": {
           "price": -114.0,
-          "snapshot_time_utc": "2026-09-17T01:35:36.557793+00:00"
+          "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00"
         },
         "hardrock": {
           "price": -115.0,
-          "snapshot_time_utc": "2026-09-17T01:35:36.557793+00:00"
+          "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00"
         }
       },
       "opponent": "TB",
@@ -155,154 +106,46 @@
       "position": "QB",
       "price_age_seconds": 5,
       "price_confirmed": true,
-      "probability_advantage": 0.162293,
+      "probability_advantage": 0.154278,
       "projection": 206.38,
       "raw_model_probability": 0.652172,
       "risk_flags": [
         "prospective_certificate_inactive"
       ],
-      "selected_side_price": -110.0,
-      "selected_sportsbook_key": "fanatics",
-      "snapshot_time_utc": "2026-09-17T01:35:36.557793+00:00",
+      "selected_side_price": -111.0,
+      "selected_sportsbook_key": "draftkings",
+      "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00",
       "target": "passing",
       "team": "CLE"
     },
     {
       "action_status": "review",
       "available_sportsbooks": [
-        "caesars",
-        "fanatics",
-        "hardrock"
+        "betr",
+        "fanatics"
       ],
-      "calibrated_hit_probability": 0.6435,
-      "candidate_authorized": false,
-      "confidence_in_support": true,
-      "direction": "OVER",
-      "event_id": "2978435",
-      "game_start_utc": "2026-09-18 00:15:00+00:00",
-      "line": 250.5,
-      "market": "player_pass_yds",
-      "market_books": 3,
-      "market_common_books": 2,
-      "market_source": "rotowire_public_nfl_props",
-      "meta_policy_score": 0.787001,
-      "model_hit_probability": 0.6435,
-      "no_vig_probability": 0.5,
-      "offers": {
-        "caesars": {
-          "price": -120.0,
-          "snapshot_time_utc": "2026-09-17T01:35:36.557793+00:00"
-        },
-        "fanatics": {
-          "price": -120.0,
-          "snapshot_time_utc": "2026-09-17T01:35:36.557793+00:00"
-        },
-        "hardrock": {
-          "price": -115.0,
-          "snapshot_time_utc": "2026-09-17T01:35:36.557793+00:00"
-        }
-      },
-      "opponent": "DET",
-      "player": "Josh Allen",
-      "player_id": "00-0034857",
-      "policy_version": "nfl_passing_loss_aware_meta_policy_v2",
-      "position": "QB",
-      "price_age_seconds": 5,
-      "price_confirmed": true,
-      "probability_advantage": 0.1435,
-      "projection": 232.24,
-      "raw_model_probability": 0.6435,
-      "risk_flags": [
-        "prospective_certificate_inactive"
-      ],
-      "selected_side_price": -115.0,
-      "selected_sportsbook_key": "hardrock",
-      "snapshot_time_utc": "2026-09-17T01:35:36.557793+00:00",
-      "target": "passing",
-      "team": "BUF"
-    },
-    {
-      "action_status": "review",
-      "available_sportsbooks": [
-        "draftkings",
-        "thescore"
-      ],
-      "calibrated_hit_probability": 0.643758,
-      "candidate_authorized": false,
-      "confidence_in_support": true,
-      "direction": "OVER",
-      "event_id": "2978435",
-      "game_start_utc": "2026-09-18 00:15:00+00:00",
-      "line": 249.5,
-      "market": "player_pass_yds",
-      "market_books": 2,
-      "market_common_books": 1,
-      "market_source": "rotowire_public_nfl_props",
-      "meta_policy_score": 0.78541,
-      "model_hit_probability": 0.643758,
-      "no_vig_probability": 0.502106,
-      "offers": {
-        "draftkings": {
-          "price": -113.0,
-          "snapshot_time_utc": "2026-09-17T01:35:36.557793+00:00"
-        },
-        "thescore": {
-          "price": -115.0,
-          "snapshot_time_utc": "2026-09-17T01:35:36.557793+00:00"
-        }
-      },
-      "opponent": "DET",
-      "player": "Josh Allen",
-      "player_id": "00-0034857",
-      "policy_version": "nfl_passing_loss_aware_meta_policy_v2",
-      "position": "QB",
-      "price_age_seconds": 5,
-      "price_confirmed": true,
-      "probability_advantage": 0.141652,
-      "projection": 232.24,
-      "raw_model_probability": 0.643758,
-      "risk_flags": [
-        "prospective_certificate_inactive"
-      ],
-      "selected_side_price": -113.0,
-      "selected_sportsbook_key": "draftkings",
-      "snapshot_time_utc": "2026-09-17T01:35:36.557793+00:00",
-      "target": "passing",
-      "team": "BUF"
-    },
-    {
-      "action_status": "review",
-      "available_sportsbooks": [
-        "caesars",
-        "draftkings",
-        "hardrock"
-      ],
-      "calibrated_hit_probability": 0.634803,
+      "calibrated_hit_probability": 0.635063,
       "candidate_authorized": false,
       "confidence_in_support": true,
       "direction": "OVER",
       "event_id": "2978626",
       "game_start_utc": "2026-09-20 20:25:00+00:00",
-      "line": 216.5,
+      "line": 215.5,
       "market": "player_pass_yds",
-      "market_books": 3,
-      "market_common_books": 2,
+      "market_books": 2,
+      "market_common_books": 1,
       "market_source": "rotowire_public_nfl_props",
-      "meta_policy_score": 0.7675,
-      "model_hit_probability": 0.634803,
-      "no_vig_probability": 0.502106,
+      "meta_policy_score": 0.780248,
+      "model_hit_probability": 0.635063,
+      "no_vig_probability": 0.489879,
       "offers": {
-        "caesars": {
-          "price": -121.0,
-          "snapshot_time_utc": "2026-09-17T01:35:36.557793+00:00"
+        "betr": {
+          "price": -116.0,
+          "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00"
         },
-        "draftkings": {
-          "price": -113.0,
-          "snapshot_time_utc": "2026-09-17T01:35:36.557793+00:00"
-        },
-        "hardrock": {
-          "price": -115.0,
-          "snapshot_time_utc": "2026-09-17T01:35:36.557793+00:00"
+        "fanatics": {
+          "price": -110.0,
+          "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00"
         }
       },
       "opponent": "DAL",
@@ -312,19 +155,196 @@
       "position": "QB",
       "price_age_seconds": 5,
       "price_confirmed": true,
-      "probability_advantage": 0.132697,
+      "probability_advantage": 0.145184,
       "projection": 156.04,
-      "raw_model_probability": 0.634803,
+      "raw_model_probability": 0.635063,
       "risk_flags": [
         "prospective_certificate_inactive"
       ],
-      "selected_side_price": -113.0,
-      "selected_sportsbook_key": "draftkings",
-      "snapshot_time_utc": "2026-09-17T01:35:36.557793+00:00",
+      "selected_side_price": -110.0,
+      "selected_sportsbook_key": "fanatics",
+      "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00",
       "target": "passing",
       "team": "WAS"
+    },
+    {
+      "action_status": "review",
+      "available_sportsbooks": [
+        "draftkings",
+        "fanduel",
+        "hardrock"
+      ],
+      "calibrated_hit_probability": 0.634543,
+      "candidate_authorized": false,
+      "confidence_in_support": true,
+      "direction": "OVER",
+      "event_id": "2978626",
+      "game_start_utc": "2026-09-20 20:25:00+00:00",
+      "line": 217.5,
+      "market": "player_pass_yds",
+      "market_books": 3,
+      "market_common_books": 2,
+      "market_source": "rotowire_public_nfl_props",
+      "meta_policy_score": 0.768025,
+      "model_hit_probability": 0.634543,
+      "no_vig_probability": 0.50106,
+      "offers": {
+        "draftkings": {
+          "price": -112.0,
+          "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00"
+        },
+        "fanduel": {
+          "price": -114.0,
+          "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00"
+        },
+        "hardrock": {
+          "price": -115.0,
+          "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00"
+        }
+      },
+      "opponent": "DAL",
+      "player": "Jayden Daniels",
+      "player_id": "00-0039910",
+      "policy_version": "nfl_passing_loss_aware_meta_policy_v2",
+      "position": "QB",
+      "price_age_seconds": 5,
+      "price_confirmed": true,
+      "probability_advantage": 0.133483,
+      "projection": 156.04,
+      "raw_model_probability": 0.634543,
+      "risk_flags": [
+        "prospective_certificate_inactive"
+      ],
+      "selected_side_price": -112.0,
+      "selected_sportsbook_key": "draftkings",
+      "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00",
+      "target": "passing",
+      "team": "WAS"
+    },
+    {
+      "action_status": "review",
+      "available_sportsbooks": [
+        "betr",
+        "betrivers",
+        "caesars",
+        "draftkings",
+        "fanatics",
+        "hardrock"
+      ],
+      "calibrated_hit_probability": 0.615901,
+      "candidate_authorized": false,
+      "confidence_in_support": true,
+      "direction": "OVER",
+      "event_id": "2978626",
+      "game_start_utc": "2026-09-20 20:25:00+00:00",
+      "line": 265.5,
+      "market": "player_pass_yds",
+      "market_books": 6,
+      "market_common_books": 3,
+      "market_source": "rotowire_public_nfl_props",
+      "meta_policy_score": 0.741924,
+      "model_hit_probability": 0.615901,
+      "no_vig_probability": 0.489879,
+      "offers": {
+        "betr": {
+          "price": -118.0,
+          "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00"
+        },
+        "betrivers": {
+          "price": -114.0,
+          "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00"
+        },
+        "caesars": {
+          "price": -113.0,
+          "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00"
+        },
+        "draftkings": {
+          "price": -113.0,
+          "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00"
+        },
+        "fanatics": {
+          "price": -110.0,
+          "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00"
+        },
+        "hardrock": {
+          "price": -115.0,
+          "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00"
+        }
+      },
+      "opponent": "WAS",
+      "player": "Dak Prescott",
+      "player_id": "00-0033077",
+      "policy_version": "nfl_passing_loss_aware_meta_policy_v2",
+      "position": "QB",
+      "price_age_seconds": 5,
+      "price_confirmed": true,
+      "probability_advantage": 0.126023,
+      "projection": 243.11,
+      "raw_model_probability": 0.615901,
+      "risk_flags": [
+        "prospective_certificate_inactive"
+      ],
+      "selected_side_price": -110.0,
+      "selected_sportsbook_key": "fanatics",
+      "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00",
+      "target": "passing",
+      "team": "DAL"
+    },
+    {
+      "action_status": "review",
+      "available_sportsbooks": [
+        "caesars",
+        "fanduel",
+        "hardrock"
+      ],
+      "calibrated_hit_probability": 0.601436,
+      "candidate_authorized": false,
+      "confidence_in_support": true,
+      "direction": "OVER",
+      "event_id": "2978651",
+      "game_start_utc": "2026-09-20 20:05:00+00:00",
+      "line": 192.5,
+      "market": "player_pass_yds",
+      "market_books": 3,
+      "market_common_books": 2,
+      "market_source": "rotowire_public_nfl_props",
+      "meta_policy_score": 0.702873,
+      "model_hit_probability": 0.601436,
+      "no_vig_probability": 0.5,
+      "offers": {
+        "caesars": {
+          "price": -114.0,
+          "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00"
+        },
+        "fanduel": {
+          "price": -114.0,
+          "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00"
+        },
+        "hardrock": {
+          "price": -115.0,
+          "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00"
+        }
+      },
+      "opponent": "LAC",
+      "player": "Kirk Cousins",
+      "player_id": "00-0029604",
+      "policy_version": "nfl_passing_loss_aware_meta_policy_v2",
+      "position": "QB",
+      "price_age_seconds": 5,
+      "price_confirmed": true,
+      "probability_advantage": 0.101436,
+      "projection": 209.28,
+      "raw_model_probability": 0.601436,
+      "risk_flags": [
+        "prospective_certificate_inactive"
+      ],
+      "selected_side_price": -114.0,
+      "selected_sportsbook_key": "caesars",
+      "snapshot_time_utc": "2026-09-18T01:25:01.791851+00:00",
+      "target": "passing",
+      "team": "LV"
     }
   ],
-  "run_date": "2026-09-16",
+  "run_date": "2026-09-17",
   "week_id": "2026-W38"
 }
