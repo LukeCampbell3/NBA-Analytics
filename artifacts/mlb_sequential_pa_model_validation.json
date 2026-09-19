@@ -5,11 +5,11 @@
       "new_batter_statcast_fetches": 0,
       "new_date_requires_new_partition": true,
       "new_direct_matchups": 0,
-      "new_pitcher_statcast_fetches": 10,
+      "new_pitcher_statcast_fetches": 9,
       "reused_batter_profiles": 0,
       "reused_direct_matchups": 0,
-      "reused_pitcher_profiles": 0,
-      "same_asof_partition_reused": false
+      "reused_pitcher_profiles": 10,
+      "same_asof_partition_reused": true
     },
     "candidate_identities": 80,
     "defense_layer": {
@@ -20,7 +20,7 @@
     "direct_matchups": 0,
     "effective_as_of_date": "2026-09-18",
     "failures": [],
-    "fetched_at_utc": "2026-09-19T18:21:09.442657+00:00",
+    "fetched_at_utc": "2026-09-19T23:23:01.333907+00:00",
     "freshness_policy": {
       "historical_cutoff": "strictly_before_run_date",
       "max_profile_age_days": 3,
@@ -33,15 +33,15 @@
       "bvp_process": "sports/mlb/data/advanced/20260919/bvp_process.json",
       "pitcher_profiles": "sports/mlb/data/advanced/20260919/pitcher_profiles.json"
     },
-    "pitcher_profiles": 10,
+    "pitcher_profiles": 19,
     "run_date": "2026-09-19",
     "schema_version": "mlb_advanced_profiles_v1",
     "source_status": {
       "baseball_savant_statcast": {
-        "covered_entities": 10,
+        "covered_entities": 9,
         "effective_as_of_date": "2026-09-18",
         "failures": 0,
-        "required_entities": 10,
+        "required_entities": 9,
         "status": "SUCCESS"
       },
       "fangraphs": {
@@ -76,7 +76,7 @@
   "blocked_rows": 810,
   "data_freshness_status": "FRESH",
   "evaluated_h_tb_hr_rows": 810,
-  "generated_at_utc": "2026-09-19T18:21:10.950544+00:00",
+  "generated_at_utc": "2026-09-19T23:23:02.725522+00:00",
   "identity": {
     "games_requested": 15,
     "games_resolved": 15,
@@ -109,7 +109,7 @@
   "pregame_feature_snapshot": {
     "captured": true,
     "outcomes_included": false,
-    "path": "sports/mlb/web/data/history/runs/2026-09-19/game_conditioned_pregame/20260919T182110Z_1a8146f1d210918b.json"
+    "path": "sports/mlb/web/data/history/runs/2026-09-19/game_conditioned_pregame/20260919T232302Z_3abd9b18110c2c43.json"
   },
   "rows": [
     {
@@ -656,7 +656,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Christian Encarnacion-Strand",
+      "player": "Dylan Beavers",
       "row": 108,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -665,7 +665,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Christian Encarnacion-Strand",
+      "player": "Dylan Beavers",
       "row": 109,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -674,7 +674,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Christian Encarnacion-Strand",
+      "player": "Dylan Beavers",
       "row": 111,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -683,7 +683,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Christian Franklin",
+      "player": "Pete Alonso",
       "row": 113,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -692,7 +692,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Christian Franklin",
+      "player": "Pete Alonso",
       "row": 114,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -701,7 +701,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Christian Franklin",
+      "player": "Pete Alonso",
       "row": 116,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -710,7 +710,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Coby Mayo",
+      "player": "Gunnar Henderson",
       "row": 118,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -719,7 +719,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Coby Mayo",
+      "player": "Gunnar Henderson",
       "row": 119,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -728,7 +728,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Coby Mayo",
+      "player": "Gunnar Henderson",
       "row": 121,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -737,7 +737,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Gunnar Henderson",
+      "player": "Coby Mayo",
       "row": 123,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -746,7 +746,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Gunnar Henderson",
+      "player": "Coby Mayo",
       "row": 124,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -755,7 +755,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Gunnar Henderson",
+      "player": "Coby Mayo",
       "row": 126,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -764,7 +764,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jeremiah Jackson",
+      "player": "Samuel Basallo",
       "row": 128,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -773,7 +773,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jeremiah Jackson",
+      "player": "Samuel Basallo",
       "row": 129,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -782,7 +782,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jeremiah Jackson",
+      "player": "Samuel Basallo",
       "row": 131,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -791,7 +791,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Leody Taveras",
+      "player": "Christian Encarnacion-Strand",
       "row": 133,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -800,7 +800,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Leody Taveras",
+      "player": "Christian Encarnacion-Strand",
       "row": 134,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -809,7 +809,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Leody Taveras",
+      "player": "Christian Encarnacion-Strand",
       "row": 136,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -818,7 +818,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Pete Alonso",
+      "player": "Colton Cowser",
       "row": 138,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -827,7 +827,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Pete Alonso",
+      "player": "Colton Cowser",
       "row": 139,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -836,34 +836,37 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Pete Alonso",
+      "player": "Colton Cowser",
       "row": 141,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
+        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Rece Hinds",
+      "player": "Heston Kjerstad",
       "row": 143,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
+        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Rece Hinds",
+      "player": "Heston Kjerstad",
       "row": 144,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
+        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Rece Hinds",
+      "player": "Heston Kjerstad",
       "row": 146,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -872,7 +875,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Samuel Basallo",
+      "player": "Rece Hinds",
       "row": 148,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -881,7 +884,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Samuel Basallo",
+      "player": "Rece Hinds",
       "row": 149,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -890,7 +893,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Samuel Basallo",
+      "player": "Rece Hinds",
       "row": 151,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -899,7 +902,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Andrew Vaughn",
+      "player": "Jackson Chourio",
       "row": 162,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -908,7 +911,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Andrew Vaughn",
+      "player": "Jackson Chourio",
       "row": 163,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -917,7 +920,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Andrew Vaughn",
+      "player": "Jackson Chourio",
       "row": 165,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -926,7 +929,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Cooper Pratt",
+      "player": "Brice Turang",
       "row": 167,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -935,7 +938,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Cooper Pratt",
+      "player": "Brice Turang",
       "row": 168,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -944,7 +947,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Cooper Pratt",
+      "player": "Brice Turang",
       "row": 170,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -953,7 +956,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "David Hamilton",
+      "player": "William Contreras",
       "row": 172,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -962,7 +965,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "David Hamilton",
+      "player": "William Contreras",
       "row": 173,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -971,7 +974,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "David Hamilton",
+      "player": "William Contreras",
       "row": 175,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -980,7 +983,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Garrett Mitchell",
+      "player": "Jake Bauers",
       "row": 177,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -989,7 +992,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Garrett Mitchell",
+      "player": "Jake Bauers",
       "row": 178,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -998,7 +1001,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Garrett Mitchell",
+      "player": "Jake Bauers",
       "row": 180,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1007,7 +1010,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jackson Chourio",
+      "player": "Andrew Vaughn",
       "row": 182,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1016,7 +1019,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jackson Chourio",
+      "player": "Andrew Vaughn",
       "row": 183,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1025,7 +1028,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jackson Chourio",
+      "player": "Andrew Vaughn",
       "row": 185,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1034,7 +1037,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Joey Ortiz",
+      "player": "Christian Yelich",
       "row": 187,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1043,7 +1046,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Joey Ortiz",
+      "player": "Christian Yelich",
       "row": 188,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1052,7 +1055,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Joey Ortiz",
+      "player": "Christian Yelich",
       "row": 190,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1061,7 +1064,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Luis Lara",
+      "player": "Joey Ortiz",
       "row": 192,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1070,7 +1073,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Luis Lara",
+      "player": "Joey Ortiz",
       "row": 193,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1079,7 +1082,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Luis Lara",
+      "player": "Joey Ortiz",
       "row": 195,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1088,7 +1091,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "William Contreras",
+      "player": "Garrett Mitchell",
       "row": 197,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1097,7 +1100,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "William Contreras",
+      "player": "Garrett Mitchell",
       "row": 198,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1106,7 +1109,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "William Contreras",
+      "player": "Garrett Mitchell",
       "row": 200,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1115,7 +1118,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Brice Turang",
+      "player": "Luis Lara",
       "row": 202,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1124,7 +1127,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Brice Turang",
+      "player": "Luis Lara",
       "row": 203,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1133,7 +1136,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Brice Turang",
+      "player": "Luis Lara",
       "row": 205,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1142,7 +1145,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Cedric Mullins",
+      "player": "Yandy D\u00edaz",
       "row": 216,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1151,7 +1154,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Cedric Mullins",
+      "player": "Yandy D\u00edaz",
       "row": 217,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1160,7 +1163,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Cedric Mullins",
+      "player": "Yandy D\u00edaz",
       "row": 219,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1169,7 +1172,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Chandler Simpson",
+      "player": "Jonathan Aranda",
       "row": 221,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1178,7 +1181,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Chandler Simpson",
+      "player": "Jonathan Aranda",
       "row": 222,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1187,7 +1190,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Chandler Simpson",
+      "player": "Jonathan Aranda",
       "row": 224,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1196,7 +1199,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jake Fraley",
+      "player": "Junior Caminero",
       "row": 226,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1205,7 +1208,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jake Fraley",
+      "player": "Junior Caminero",
       "row": 227,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1214,7 +1217,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jake Fraley",
+      "player": "Junior Caminero",
       "row": 229,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1223,7 +1226,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jonathan Aranda",
+      "player": "Richie Palacios",
       "row": 231,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1232,7 +1235,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jonathan Aranda",
+      "player": "Richie Palacios",
       "row": 232,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1241,7 +1244,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jonathan Aranda",
+      "player": "Richie Palacios",
       "row": 234,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1250,7 +1253,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jorge Mateo",
+      "player": "Ryan Vilade",
       "row": 236,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1259,7 +1262,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jorge Mateo",
+      "player": "Ryan Vilade",
       "row": 237,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1268,7 +1271,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jorge Mateo",
+      "player": "Ryan Vilade",
       "row": 239,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1277,7 +1280,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Junior Caminero",
+      "player": "Chandler Simpson",
       "row": 241,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1286,7 +1289,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Junior Caminero",
+      "player": "Chandler Simpson",
       "row": 242,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1295,7 +1298,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Junior Caminero",
+      "player": "Chandler Simpson",
       "row": 244,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1304,7 +1307,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Liam Hicks",
+      "player": "Jonny DeLuca",
       "row": 246,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1313,7 +1316,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Liam Hicks",
+      "player": "Jonny DeLuca",
       "row": 247,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1322,7 +1325,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Liam Hicks",
+      "player": "Jonny DeLuca",
       "row": 249,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1331,7 +1334,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Richie Palacios",
+      "player": "Liam Hicks",
       "row": 251,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1340,7 +1343,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Richie Palacios",
+      "player": "Liam Hicks",
       "row": 252,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1349,7 +1352,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Richie Palacios",
+      "player": "Liam Hicks",
       "row": 254,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1358,7 +1361,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Victor Mesa Jr",
+      "player": "Nick Fortes",
       "row": 256,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1367,7 +1370,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Victor Mesa Jr",
+      "player": "Nick Fortes",
       "row": 257,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1376,7 +1379,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Victor Mesa Jr",
+      "player": "Nick Fortes",
       "row": 259,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1385,7 +1388,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Adley Rutschman",
+      "player": "Roman Anthony",
       "row": 270,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1394,7 +1397,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Adley Rutschman",
+      "player": "Roman Anthony",
       "row": 271,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1403,7 +1406,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Adley Rutschman",
+      "player": "Roman Anthony",
       "row": 273,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1412,7 +1415,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Caleb Durbin",
+      "player": "Nick Sogard",
       "row": 275,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1421,7 +1424,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Caleb Durbin",
+      "player": "Nick Sogard",
       "row": 276,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1430,7 +1433,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Caleb Durbin",
+      "player": "Nick Sogard",
       "row": 278,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1439,7 +1442,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Isiah Kiner-Falefa",
+      "player": "Jahmai Jones",
       "row": 280,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1448,7 +1451,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Isiah Kiner-Falefa",
+      "player": "Jahmai Jones",
       "row": 281,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1457,7 +1460,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Isiah Kiner-Falefa",
+      "player": "Jahmai Jones",
       "row": 283,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1466,7 +1469,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jarren Duran",
+      "player": "Mickey Gasper",
       "row": 285,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1475,7 +1478,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jarren Duran",
+      "player": "Mickey Gasper",
       "row": 286,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1484,7 +1487,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jarren Duran",
+      "player": "Mickey Gasper",
       "row": 288,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1493,7 +1496,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Mickey Gasper",
+      "player": "Wilyer Abreu",
       "row": 290,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1502,7 +1505,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Mickey Gasper",
+      "player": "Wilyer Abreu",
       "row": 291,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1511,7 +1514,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Mickey Gasper",
+      "player": "Wilyer Abreu",
       "row": 293,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1520,7 +1523,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Nick Sogard",
+      "player": "Trevor Story",
       "row": 295,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1529,7 +1532,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Nick Sogard",
+      "player": "Trevor Story",
       "row": 296,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1538,7 +1541,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Nick Sogard",
+      "player": "Trevor Story",
       "row": 298,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1547,7 +1550,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Roman Anthony",
+      "player": "Caleb Durbin",
       "row": 300,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1556,7 +1559,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Roman Anthony",
+      "player": "Caleb Durbin",
       "row": 301,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1565,7 +1568,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Roman Anthony",
+      "player": "Caleb Durbin",
       "row": 303,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1574,7 +1577,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Trevor Story",
+      "player": "Isiah Kiner-Falefa",
       "row": 305,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1583,7 +1586,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Trevor Story",
+      "player": "Isiah Kiner-Falefa",
       "row": 306,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1592,7 +1595,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Trevor Story",
+      "player": "Isiah Kiner-Falefa",
       "row": 308,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1601,7 +1604,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Wilyer Abreu",
+      "player": "Nate Eaton",
       "row": 310,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1610,7 +1613,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Wilyer Abreu",
+      "player": "Nate Eaton",
       "row": 311,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1619,37 +1622,34 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Wilyer Abreu",
+      "player": "Nate Eaton",
       "row": 313,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "AJ Ewing",
+      "player": "Francisco Lindor",
       "row": 324,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "AJ Ewing",
+      "player": "Francisco Lindor",
       "row": 325,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "AJ Ewing",
+      "player": "Francisco Lindor",
       "row": 327,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1658,7 +1658,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Bo Bichette",
+      "player": "Juan Soto",
       "row": 329,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1667,7 +1667,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Bo Bichette",
+      "player": "Juan Soto",
       "row": 330,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1676,7 +1676,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Bo Bichette",
+      "player": "Juan Soto",
       "row": 332,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1685,7 +1685,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Brett Baty",
+      "player": "Bo Bichette",
       "row": 334,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1694,7 +1694,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Brett Baty",
+      "player": "Bo Bichette",
       "row": 335,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1703,7 +1703,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Brett Baty",
+      "player": "Bo Bichette",
       "row": 337,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1739,7 +1739,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Francisco Alvarez",
+      "player": "Mark Vientos",
       "row": 344,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1748,7 +1748,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Francisco Alvarez",
+      "player": "Mark Vientos",
       "row": 345,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1757,34 +1757,37 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Francisco Alvarez",
+      "player": "Mark Vientos",
       "row": 347,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
+        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Francisco Lindor",
+      "player": "AJ Ewing",
       "row": 349,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
+        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Francisco Lindor",
+      "player": "AJ Ewing",
       "row": 350,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
+        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Francisco Lindor",
+      "player": "AJ Ewing",
       "row": 352,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1793,7 +1796,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Juan Soto",
+      "player": "Marcus Semien",
       "row": 354,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1802,7 +1805,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Juan Soto",
+      "player": "Marcus Semien",
       "row": 355,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1811,7 +1814,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Juan Soto",
+      "player": "Marcus Semien",
       "row": 357,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1820,7 +1823,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Marcus Semien",
+      "player": "Brett Baty",
       "row": 359,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1829,7 +1832,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Marcus Semien",
+      "player": "Brett Baty",
       "row": 360,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1838,7 +1841,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Marcus Semien",
+      "player": "Brett Baty",
       "row": 362,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1847,7 +1850,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Ronny Mauricio",
+      "player": "Luis Torrens",
       "row": 364,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1856,7 +1859,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Ronny Mauricio",
+      "player": "Luis Torrens",
       "row": 365,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1865,7 +1868,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Ronny Mauricio",
+      "player": "Luis Torrens",
       "row": 367,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1874,7 +1877,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Alec Bohm",
+      "player": "Kyle Schwarber",
       "row": 378,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1883,7 +1886,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Alec Bohm",
+      "player": "Kyle Schwarber",
       "row": 379,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1892,7 +1895,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Alec Bohm",
+      "player": "Kyle Schwarber",
       "row": 381,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1901,7 +1904,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Brandon Marsh",
+      "player": "Trea Turner",
       "row": 383,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1910,7 +1913,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Brandon Marsh",
+      "player": "Trea Turner",
       "row": 384,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1919,7 +1922,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Brandon Marsh",
+      "player": "Trea Turner",
       "row": 386,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -1955,7 +1958,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Bryson Stott",
+      "player": "Luis Arraez",
       "row": 393,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -1964,7 +1967,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Bryson Stott",
+      "player": "Luis Arraez",
       "row": 394,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -1973,37 +1976,34 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Bryson Stott",
+      "player": "Luis Arraez",
       "row": 396,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "JT Realmuto",
+      "player": "Alec Bohm",
       "row": 398,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "JT Realmuto",
+      "player": "Alec Bohm",
       "row": 399,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "JT Realmuto",
+      "player": "Alec Bohm",
       "row": 401,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2012,7 +2012,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Justin Crawford",
+      "player": "Edmundo Sosa",
       "row": 403,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2021,7 +2021,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Justin Crawford",
+      "player": "Edmundo Sosa",
       "row": 404,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2030,7 +2030,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Justin Crawford",
+      "player": "Edmundo Sosa",
       "row": 406,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2039,7 +2039,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Kyle Schwarber",
+      "player": "Brandon Marsh",
       "row": 408,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2048,7 +2048,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Kyle Schwarber",
+      "player": "Brandon Marsh",
       "row": 409,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2057,7 +2057,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Kyle Schwarber",
+      "player": "Brandon Marsh",
       "row": 411,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2066,7 +2066,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Luis Arraez",
+      "player": "Bryson Stott",
       "row": 413,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2075,7 +2075,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Luis Arraez",
+      "player": "Bryson Stott",
       "row": 414,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2084,34 +2084,37 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Luis Arraez",
+      "player": "Bryson Stott",
       "row": 416,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
+        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Trea Turner",
+      "player": "JT Realmuto",
       "row": 418,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
+        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Trea Turner",
+      "player": "JT Realmuto",
       "row": 419,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
+        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Trea Turner",
+      "player": "JT Realmuto",
       "row": 421,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2120,7 +2123,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Angel Genao",
+      "player": "Steven Kwan",
       "row": 432,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2129,7 +2132,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Angel Genao",
+      "player": "Steven Kwan",
       "row": 433,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2138,7 +2141,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Angel Genao",
+      "player": "Steven Kwan",
       "row": 435,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2147,7 +2150,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Austin Hedges",
+      "player": "Jos\u00e9 Ram\u00edrez",
       "row": 437,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2156,7 +2159,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Austin Hedges",
+      "player": "Jos\u00e9 Ram\u00edrez",
       "row": 438,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2165,7 +2168,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Austin Hedges",
+      "player": "Jos\u00e9 Ram\u00edrez",
       "row": 440,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2174,7 +2177,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Brayan Rocchio",
+      "player": "Chase DeLauter",
       "row": 442,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2183,7 +2186,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Brayan Rocchio",
+      "player": "Chase DeLauter",
       "row": 443,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2192,7 +2195,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Brayan Rocchio",
+      "player": "Chase DeLauter",
       "row": 445,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2201,7 +2204,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Chase DeLauter",
+      "player": "Jo Adell",
       "row": 447,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2210,7 +2213,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Chase DeLauter",
+      "player": "Jo Adell",
       "row": 448,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2219,7 +2222,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Chase DeLauter",
+      "player": "Jo Adell",
       "row": 450,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2228,7 +2231,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "David Fry",
+      "player": "Travis Bazzana",
       "row": 452,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2237,7 +2240,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "David Fry",
+      "player": "Travis Bazzana",
       "row": 453,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2246,7 +2249,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "David Fry",
+      "player": "Travis Bazzana",
       "row": 455,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2255,7 +2258,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jo Adell",
+      "player": "Nathaniel Lowe",
       "row": 457,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2264,7 +2267,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jo Adell",
+      "player": "Nathaniel Lowe",
       "row": 458,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2273,7 +2276,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jo Adell",
+      "player": "Nathaniel Lowe",
       "row": 460,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2282,7 +2285,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Steven Kwan",
+      "player": "Patrick Bailey",
       "row": 462,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2291,7 +2294,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Steven Kwan",
+      "player": "Patrick Bailey",
       "row": 463,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2300,7 +2303,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Steven Kwan",
+      "player": "Patrick Bailey",
       "row": 465,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2309,7 +2312,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jos\u00e9 Ram\u00edrez",
+      "player": "Petey Halpin",
       "row": 467,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2318,7 +2321,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jos\u00e9 Ram\u00edrez",
+      "player": "Petey Halpin",
       "row": 468,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2327,7 +2330,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jos\u00e9 Ram\u00edrez",
+      "player": "Petey Halpin",
       "row": 470,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2336,7 +2339,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Travis Bazzana",
+      "player": "Brayan Rocchio",
       "row": 472,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2345,7 +2348,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Travis Bazzana",
+      "player": "Brayan Rocchio",
       "row": 473,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2354,7 +2357,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Travis Bazzana",
+      "player": "Brayan Rocchio",
       "row": 475,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2363,7 +2366,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Alika Williams",
+      "player": "Henry Bolte",
       "row": 486,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2372,7 +2375,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Alika Williams",
+      "player": "Henry Bolte",
       "row": 487,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2381,7 +2384,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Alika Williams",
+      "player": "Henry Bolte",
       "row": 489,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2390,7 +2393,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Donovan Walton",
+      "player": "Shea Langeliers",
       "row": 491,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2399,7 +2402,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Donovan Walton",
+      "player": "Shea Langeliers",
       "row": 492,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2408,7 +2411,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Donovan Walton",
+      "player": "Shea Langeliers",
       "row": 494,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2417,7 +2420,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Henry Bolte",
+      "player": "Lawrence Butler",
       "row": 496,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2426,7 +2429,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Henry Bolte",
+      "player": "Lawrence Butler",
       "row": 497,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2435,7 +2438,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Henry Bolte",
+      "player": "Lawrence Butler",
       "row": 499,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2444,7 +2447,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jeff McNeil",
+      "player": "Zack Gelof",
       "row": 501,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2453,7 +2456,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jeff McNeil",
+      "player": "Zack Gelof",
       "row": 502,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2462,7 +2465,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jeff McNeil",
+      "player": "Zack Gelof",
       "row": 504,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2471,7 +2474,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jonah Heim",
+      "player": "Jeff McNeil",
       "row": 506,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2480,7 +2483,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jonah Heim",
+      "player": "Jeff McNeil",
       "row": 507,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2489,7 +2492,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jonah Heim",
+      "player": "Jeff McNeil",
       "row": 509,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2498,7 +2501,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Lawrence Butler",
+      "player": "Tommy White",
       "row": 511,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2507,7 +2510,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Lawrence Butler",
+      "player": "Tommy White",
       "row": 512,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2516,7 +2519,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Lawrence Butler",
+      "player": "Tommy White",
       "row": 514,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2525,7 +2528,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Shea Langeliers",
+      "player": "Jonah Heim",
       "row": 516,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2534,7 +2537,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Shea Langeliers",
+      "player": "Jonah Heim",
       "row": 517,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2543,7 +2546,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Shea Langeliers",
+      "player": "Jonah Heim",
       "row": 519,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2552,7 +2555,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Tommy White",
+      "player": "Michael Stefanic",
       "row": 521,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2561,7 +2564,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Tommy White",
+      "player": "Michael Stefanic",
       "row": 522,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2570,7 +2573,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Tommy White",
+      "player": "Michael Stefanic",
       "row": 524,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2579,7 +2582,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Zack Gelof",
+      "player": "Alika Williams",
       "row": 526,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2588,7 +2591,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Zack Gelof",
+      "player": "Alika Williams",
       "row": 527,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2597,7 +2600,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Zack Gelof",
+      "player": "Alika Williams",
       "row": 529,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2606,7 +2609,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Dane Myers",
+      "player": "Elly De La Cruz",
       "row": 540,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2615,7 +2618,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Dane Myers",
+      "player": "Elly De La Cruz",
       "row": 541,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2624,7 +2627,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Dane Myers",
+      "player": "Elly De La Cruz",
       "row": 543,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2633,7 +2636,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Elly De La Cruz",
+      "player": "Sal Stewart",
       "row": 545,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2642,7 +2645,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Elly De La Cruz",
+      "player": "Sal Stewart",
       "row": 546,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2651,7 +2654,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Elly De La Cruz",
+      "player": "Sal Stewart",
       "row": 548,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2660,7 +2663,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "JJ Bleday",
+      "player": "Tyler Stephenson",
       "row": 550,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2669,7 +2672,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "JJ Bleday",
+      "player": "Tyler Stephenson",
       "row": 551,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2678,7 +2681,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "JJ Bleday",
+      "player": "Tyler Stephenson",
       "row": 553,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2687,7 +2690,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jose Trevino",
+      "player": "JJ Bleday",
       "row": 555,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2696,7 +2699,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jose Trevino",
+      "player": "JJ Bleday",
       "row": 556,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2705,7 +2708,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jose Trevino",
+      "player": "JJ Bleday",
       "row": 558,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2714,7 +2717,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Juan Brito",
+      "player": "Eugenio Su\u00e1rez",
       "row": 560,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2723,7 +2726,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Juan Brito",
+      "player": "Eugenio Su\u00e1rez",
       "row": 561,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2732,34 +2735,37 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Juan Brito",
+      "player": "Eugenio Su\u00e1rez",
       "row": 563,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
+        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Matt McLain",
+      "player": "KeBryan Hayes",
       "row": 565,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
+        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Matt McLain",
+      "player": "KeBryan Hayes",
       "row": 566,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
+        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Matt McLain",
+      "player": "KeBryan Hayes",
       "row": 568,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2768,7 +2774,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Sal Stewart",
+      "player": "H\u00e9ctor Rodr\u00edguez",
       "row": 570,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2777,7 +2783,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Sal Stewart",
+      "player": "H\u00e9ctor Rodr\u00edguez",
       "row": 571,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2786,34 +2792,37 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Sal Stewart",
+      "player": "H\u00e9ctor Rodr\u00edguez",
       "row": 573,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
+        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Tyler Stephenson",
+      "player": "TJ Friedl",
       "row": 575,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
+        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Tyler Stephenson",
+      "player": "TJ Friedl",
       "row": 576,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
+        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Tyler Stephenson",
+      "player": "TJ Friedl",
       "row": 578,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2822,7 +2831,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Eugenio Su\u00e1rez",
+      "player": "Jose Trevino",
       "row": 580,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2831,7 +2840,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Eugenio Su\u00e1rez",
+      "player": "Jose Trevino",
       "row": 581,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2840,7 +2849,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Eugenio Su\u00e1rez",
+      "player": "Jose Trevino",
       "row": 583,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2849,7 +2858,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Alex Bregman",
+      "player": "Pete Crow-Armstrong",
       "row": 594,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2858,7 +2867,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Alex Bregman",
+      "player": "Pete Crow-Armstrong",
       "row": 595,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2867,7 +2876,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Alex Bregman",
+      "player": "Pete Crow-Armstrong",
       "row": 597,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2876,7 +2885,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Dansby Swanson",
+      "player": "Seiya Suzuki",
       "row": 599,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2885,7 +2894,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Dansby Swanson",
+      "player": "Seiya Suzuki",
       "row": 600,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2894,7 +2903,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Dansby Swanson",
+      "player": "Seiya Suzuki",
       "row": 602,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2903,7 +2912,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Matt Shaw",
+      "player": "Michael Busch",
       "row": 604,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2912,7 +2921,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Matt Shaw",
+      "player": "Michael Busch",
       "row": 605,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2921,7 +2930,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Matt Shaw",
+      "player": "Michael Busch",
       "row": 607,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2930,7 +2939,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Michael Busch",
+      "player": "Alex Bregman",
       "row": 609,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2939,7 +2948,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Michael Busch",
+      "player": "Alex Bregman",
       "row": 610,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2948,7 +2957,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Michael Busch",
+      "player": "Alex Bregman",
       "row": 612,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -2957,7 +2966,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Miguel Amaya",
+      "player": "Ian Happ",
       "row": 614,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -2966,7 +2975,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Miguel Amaya",
+      "player": "Ian Happ",
       "row": 615,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -2975,7 +2984,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Miguel Amaya",
+      "player": "Ian Happ",
       "row": 617,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3011,7 +3020,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Pete Crow-Armstrong",
+      "player": "Michael Conforto",
       "row": 624,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3020,7 +3029,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Pete Crow-Armstrong",
+      "player": "Michael Conforto",
       "row": 625,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3029,7 +3038,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Pete Crow-Armstrong",
+      "player": "Michael Conforto",
       "row": 627,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3038,7 +3047,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Seiya Suzuki",
+      "player": "Carson Kelly",
       "row": 629,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3047,7 +3056,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Seiya Suzuki",
+      "player": "Carson Kelly",
       "row": 630,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3056,7 +3065,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Seiya Suzuki",
+      "player": "Carson Kelly",
       "row": 632,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3065,7 +3074,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Tyrone Taylor",
+      "player": "Dansby Swanson",
       "row": 634,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3074,7 +3083,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Tyrone Taylor",
+      "player": "Dansby Swanson",
       "row": 635,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3083,7 +3092,7 @@
       "missing": [
         "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Tyrone Taylor",
+      "player": "Dansby Swanson",
       "row": 637,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3093,7 +3102,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Brandon Lowe",
+      "player": "Konnor Griffin",
       "row": 648,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3103,7 +3112,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Brandon Lowe",
+      "player": "Konnor Griffin",
       "row": 649,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3113,7 +3122,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Brandon Lowe",
+      "player": "Konnor Griffin",
       "row": 651,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3123,7 +3132,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Bryan Reynolds",
+      "player": "Brandon Lowe",
       "row": 653,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3133,7 +3142,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Bryan Reynolds",
+      "player": "Brandon Lowe",
       "row": 654,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3143,7 +3152,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Bryan Reynolds",
+      "player": "Brandon Lowe",
       "row": 656,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3153,7 +3162,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Henry Davis",
+      "player": "Bryan Reynolds",
       "row": 658,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3163,7 +3172,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Henry Davis",
+      "player": "Bryan Reynolds",
       "row": 659,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3173,7 +3182,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Henry Davis",
+      "player": "Bryan Reynolds",
       "row": 661,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3183,7 +3192,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Jared Triolo",
+      "player": "Oneil Cruz",
       "row": 663,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3193,7 +3202,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Jared Triolo",
+      "player": "Oneil Cruz",
       "row": 664,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3203,7 +3212,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Jared Triolo",
+      "player": "Oneil Cruz",
       "row": 666,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3213,7 +3222,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Konnor Griffin",
+      "player": "Nick Gonzales",
       "row": 668,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3223,7 +3232,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Konnor Griffin",
+      "player": "Nick Gonzales",
       "row": 669,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3233,7 +3242,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Konnor Griffin",
+      "player": "Nick Gonzales",
       "row": 671,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3243,7 +3252,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Nick Gonzales",
+      "player": "Jared Triolo",
       "row": 673,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3253,7 +3262,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Nick Gonzales",
+      "player": "Jared Triolo",
       "row": 674,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3263,70 +3272,70 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Nick Gonzales",
+      "player": "Jared Triolo",
       "row": 676,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
+        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Oneil Cruz",
+      "player": "Ryan OHearn",
       "row": 678,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
+        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Oneil Cruz",
+      "player": "Ryan OHearn",
       "row": 679,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
+        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Oneil Cruz",
+      "player": "Ryan OHearn",
       "row": 681,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Ryan OHearn",
+      "player": "Billy Cook",
       "row": 683,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Ryan OHearn",
+      "player": "Billy Cook",
       "row": 684,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_MLBAM_ID",
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Ryan OHearn",
+      "player": "Billy Cook",
       "row": 686,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3336,7 +3345,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Billy Cook",
+      "player": "Spencer Horwitz",
       "row": 688,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3346,7 +3355,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Billy Cook",
+      "player": "Spencer Horwitz",
       "row": 689,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3356,7 +3365,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Billy Cook",
+      "player": "Spencer Horwitz",
       "row": 691,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3366,7 +3375,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Bobby Witt Jr",
+      "player": "Carter Jensen",
       "row": 702,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3376,7 +3385,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Bobby Witt Jr",
+      "player": "Carter Jensen",
       "row": 703,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3386,7 +3395,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Bobby Witt Jr",
+      "player": "Carter Jensen",
       "row": 705,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3396,7 +3405,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Carter Jensen",
+      "player": "Bobby Witt Jr",
       "row": 707,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3406,7 +3415,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Carter Jensen",
+      "player": "Bobby Witt Jr",
       "row": 708,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3416,7 +3425,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Carter Jensen",
+      "player": "Bobby Witt Jr",
       "row": 710,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3426,7 +3435,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Isaac Collins",
+      "player": "Vinnie Pasquantino",
       "row": 712,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3436,7 +3445,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Isaac Collins",
+      "player": "Vinnie Pasquantino",
       "row": 713,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3446,7 +3455,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Isaac Collins",
+      "player": "Vinnie Pasquantino",
       "row": 715,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3456,7 +3465,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "John Rave",
+      "player": "Maikel Garcia",
       "row": 717,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3466,7 +3475,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "John Rave",
+      "player": "Maikel Garcia",
       "row": 718,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3476,7 +3485,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "John Rave",
+      "player": "Maikel Garcia",
       "row": 720,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3486,7 +3495,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Kyle Isbel",
+      "player": "Michael Massey",
       "row": 722,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3496,7 +3505,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Kyle Isbel",
+      "player": "Michael Massey",
       "row": 723,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3506,7 +3515,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Kyle Isbel",
+      "player": "Michael Massey",
       "row": 725,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3516,7 +3525,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Maikel Garcia",
+      "player": "Salvador Perez",
       "row": 727,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3526,7 +3535,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Maikel Garcia",
+      "player": "Salvador Perez",
       "row": 728,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3536,7 +3545,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Maikel Garcia",
+      "player": "Salvador Perez",
       "row": 730,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3546,7 +3555,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Michael Massey",
+      "player": "John Rave",
       "row": 732,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3556,7 +3565,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Michael Massey",
+      "player": "John Rave",
       "row": 733,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3566,7 +3575,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Michael Massey",
+      "player": "John Rave",
       "row": 735,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3576,7 +3585,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Salvador Perez",
+      "player": "Isaac Collins",
       "row": 737,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3586,7 +3595,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Salvador Perez",
+      "player": "Isaac Collins",
       "row": 738,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3596,7 +3605,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Salvador Perez",
+      "player": "Isaac Collins",
       "row": 740,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3606,7 +3615,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Vinnie Pasquantino",
+      "player": "Nick Loftin",
       "row": 742,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3616,7 +3625,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Vinnie Pasquantino",
+      "player": "Nick Loftin",
       "row": 743,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3626,7 +3635,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Vinnie Pasquantino",
+      "player": "Nick Loftin",
       "row": 745,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3636,7 +3645,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Brandon Nimmo",
+      "player": "Ezequiel Duran",
       "row": 756,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3646,7 +3655,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Brandon Nimmo",
+      "player": "Ezequiel Duran",
       "row": 757,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3656,7 +3665,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Brandon Nimmo",
+      "player": "Ezequiel Duran",
       "row": 759,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3696,7 +3705,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Danny Jansen",
+      "player": "Josh Jung",
       "row": 766,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3706,7 +3715,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Danny Jansen",
+      "player": "Josh Jung",
       "row": 767,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3716,7 +3725,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Danny Jansen",
+      "player": "Josh Jung",
       "row": 769,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3726,7 +3735,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Evan Carter",
+      "player": "Brandon Nimmo",
       "row": 771,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3736,7 +3745,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Evan Carter",
+      "player": "Brandon Nimmo",
       "row": 772,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3746,7 +3755,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Evan Carter",
+      "player": "Brandon Nimmo",
       "row": 774,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3756,7 +3765,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Ezequiel Duran",
+      "player": "Alejandro Osuna",
       "row": 776,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3766,7 +3775,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Ezequiel Duran",
+      "player": "Alejandro Osuna",
       "row": 777,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3776,7 +3785,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Ezequiel Duran",
+      "player": "Alejandro Osuna",
       "row": 779,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3786,7 +3795,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Jake Burger",
+      "player": "Wyatt Langford",
       "row": 781,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3796,7 +3805,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Jake Burger",
+      "player": "Wyatt Langford",
       "row": 782,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3806,7 +3815,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Jake Burger",
+      "player": "Wyatt Langford",
       "row": 784,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3816,7 +3825,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Josh Jung",
+      "player": "Jake Burger",
       "row": 786,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3826,7 +3835,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Josh Jung",
+      "player": "Jake Burger",
       "row": 787,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3836,7 +3845,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Josh Jung",
+      "player": "Jake Burger",
       "row": 789,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3876,7 +3885,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Wyatt Langford",
+      "player": "Elias D\u00edaz",
       "row": 796,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3886,7 +3895,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Wyatt Langford",
+      "player": "Elias D\u00edaz",
       "row": 797,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3896,7 +3905,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Wyatt Langford",
+      "player": "Elias D\u00edaz",
       "row": 799,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3906,7 +3915,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Alejandro Kirk",
+      "player": "Brett Bateman",
       "row": 810,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3916,7 +3925,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Alejandro Kirk",
+      "player": "Brett Bateman",
       "row": 811,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3926,7 +3935,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Alejandro Kirk",
+      "player": "Brett Bateman",
       "row": 813,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3936,7 +3945,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Brett Bateman",
+      "player": "Nathan Lukes",
       "row": 815,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3946,7 +3955,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Brett Bateman",
+      "player": "Nathan Lukes",
       "row": 816,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3956,7 +3965,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Brett Bateman",
+      "player": "Nathan Lukes",
       "row": 818,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3966,7 +3975,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Ernie Clement",
+      "player": "Davis Schneider",
       "row": 820,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -3976,7 +3985,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Ernie Clement",
+      "player": "Davis Schneider",
       "row": 821,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -3986,7 +3995,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Ernie Clement",
+      "player": "Davis Schneider",
       "row": 823,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -3996,7 +4005,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "George Springer",
+      "player": "Sean Keys",
       "row": 825,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4006,7 +4015,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "George Springer",
+      "player": "Sean Keys",
       "row": 826,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4016,7 +4025,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "George Springer",
+      "player": "Sean Keys",
       "row": 828,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4026,7 +4035,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Josh Smith",
+      "player": "Vladimir Guerrero Jr",
       "row": 830,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4036,7 +4045,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Josh Smith",
+      "player": "Vladimir Guerrero Jr",
       "row": 831,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4046,7 +4055,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Josh Smith",
+      "player": "Vladimir Guerrero Jr",
       "row": 833,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4056,7 +4065,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Kazuma Okamoto",
+      "player": "George Springer",
       "row": 835,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4066,7 +4075,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Kazuma Okamoto",
+      "player": "George Springer",
       "row": 836,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4076,7 +4085,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Kazuma Okamoto",
+      "player": "George Springer",
       "row": 838,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4086,7 +4095,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Nathan Lukes",
+      "player": "Alejandro Kirk",
       "row": 840,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4096,7 +4105,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Nathan Lukes",
+      "player": "Alejandro Kirk",
       "row": 841,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4106,7 +4115,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Nathan Lukes",
+      "player": "Alejandro Kirk",
       "row": 843,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4116,7 +4125,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Vladimir Guerrero Jr",
+      "player": "Kazuma Okamoto",
       "row": 845,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4126,7 +4135,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Vladimir Guerrero Jr",
+      "player": "Kazuma Okamoto",
       "row": 846,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4136,7 +4145,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Vladimir Guerrero Jr",
+      "player": "Kazuma Okamoto",
       "row": 848,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4146,7 +4155,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Davis Schneider",
+      "player": "Josh Smith",
       "row": 850,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4156,7 +4165,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Davis Schneider",
+      "player": "Josh Smith",
       "row": 851,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4166,7 +4175,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Davis Schneider",
+      "player": "Josh Smith",
       "row": 853,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4176,7 +4185,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Cam Smith",
+      "player": "Jeremy Pe\u00f1a",
       "row": 864,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4186,7 +4195,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Cam Smith",
+      "player": "Jeremy Pe\u00f1a",
       "row": 865,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4196,7 +4205,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Cam Smith",
+      "player": "Jeremy Pe\u00f1a",
       "row": 867,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4206,7 +4215,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Christian Walker",
+      "player": "Yordan Alvarez",
       "row": 869,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4216,7 +4225,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Christian Walker",
+      "player": "Yordan Alvarez",
       "row": 870,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4226,7 +4235,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Christian Walker",
+      "player": "Yordan Alvarez",
       "row": 872,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4236,7 +4245,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Daulton Varsho",
+      "player": "Isaac Paredes",
       "row": 874,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4246,7 +4255,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Daulton Varsho",
+      "player": "Isaac Paredes",
       "row": 875,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4256,7 +4265,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Daulton Varsho",
+      "player": "Isaac Paredes",
       "row": 877,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4266,7 +4275,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Isaac Paredes",
+      "player": "Nick Allen",
       "row": 879,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4276,7 +4285,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Isaac Paredes",
+      "player": "Nick Allen",
       "row": 880,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4286,7 +4295,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Isaac Paredes",
+      "player": "Nick Allen",
       "row": 882,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4326,7 +4335,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Taylor Trammell",
+      "player": "Daulton Varsho",
       "row": 889,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4336,7 +4345,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Taylor Trammell",
+      "player": "Daulton Varsho",
       "row": 890,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4346,7 +4355,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Taylor Trammell",
+      "player": "Daulton Varsho",
       "row": 892,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4356,7 +4365,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Yainer Diaz",
+      "player": "Christian Walker",
       "row": 894,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4366,7 +4375,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Yainer Diaz",
+      "player": "Christian Walker",
       "row": 895,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4376,7 +4385,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Yainer Diaz",
+      "player": "Christian Walker",
       "row": 897,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4386,7 +4395,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Yordan Alvarez",
+      "player": "Taylor Trammell",
       "row": 899,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4396,7 +4405,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Yordan Alvarez",
+      "player": "Taylor Trammell",
       "row": 900,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4406,7 +4415,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Yordan Alvarez",
+      "player": "Taylor Trammell",
       "row": 902,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4416,7 +4425,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Jeremy Pe\u00f1a",
+      "player": "LaMonte Wade Jr",
       "row": 904,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4426,7 +4435,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Jeremy Pe\u00f1a",
+      "player": "LaMonte Wade Jr",
       "row": 905,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4436,7 +4445,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Jeremy Pe\u00f1a",
+      "player": "LaMonte Wade Jr",
       "row": 907,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4446,7 +4455,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Austin Riley",
+      "player": "Drake Baldwin",
       "row": 918,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4456,7 +4465,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Austin Riley",
+      "player": "Drake Baldwin",
       "row": 919,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4466,7 +4475,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Austin Riley",
+      "player": "Drake Baldwin",
       "row": 921,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4476,7 +4485,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Drake Baldwin",
+      "player": "Ronald Acu\u00f1a Jr",
       "row": 923,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4486,7 +4495,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Drake Baldwin",
+      "player": "Ronald Acu\u00f1a Jr",
       "row": 924,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4496,7 +4505,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Drake Baldwin",
+      "player": "Ronald Acu\u00f1a Jr",
       "row": 926,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4566,7 +4575,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Mike Yastrzemski",
+      "player": "Mauricio Dub\u00f3n",
       "row": 938,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4576,7 +4585,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Mike Yastrzemski",
+      "player": "Mauricio Dub\u00f3n",
       "row": 939,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4586,7 +4595,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Mike Yastrzemski",
+      "player": "Mauricio Dub\u00f3n",
       "row": 941,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4626,7 +4635,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Sean Murphy",
+      "player": "Mike Yastrzemski",
       "row": 948,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4636,7 +4645,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Sean Murphy",
+      "player": "Mike Yastrzemski",
       "row": 949,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4646,7 +4655,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Sean Murphy",
+      "player": "Mike Yastrzemski",
       "row": 951,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4656,7 +4665,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Ronald Acu\u00f1a Jr",
+      "player": "Austin Riley",
       "row": 953,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4666,7 +4675,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Ronald Acu\u00f1a Jr",
+      "player": "Austin Riley",
       "row": 954,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4676,7 +4685,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Ronald Acu\u00f1a Jr",
+      "player": "Austin Riley",
       "row": 956,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4686,7 +4695,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Mauricio Dub\u00f3n",
+      "player": "Sean Murphy",
       "row": 958,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4696,7 +4705,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Mauricio Dub\u00f3n",
+      "player": "Sean Murphy",
       "row": 959,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4706,7 +4715,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Mauricio Dub\u00f3n",
+      "player": "Sean Murphy",
       "row": 961,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4716,7 +4725,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Alec Burleson",
+      "player": "JJ Wetherholt",
       "row": 972,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4726,7 +4735,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Alec Burleson",
+      "player": "JJ Wetherholt",
       "row": 973,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4736,7 +4745,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Alec Burleson",
+      "player": "JJ Wetherholt",
       "row": 975,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4746,7 +4755,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "JJ Wetherholt",
+      "player": "Iv\u00e1n Herrera",
       "row": 977,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4756,7 +4765,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "JJ Wetherholt",
+      "player": "Iv\u00e1n Herrera",
       "row": 978,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4766,7 +4775,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "JJ Wetherholt",
+      "player": "Iv\u00e1n Herrera",
       "row": 980,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4776,7 +4785,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Jordan Walker",
+      "player": "Alec Burleson",
       "row": 982,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4786,7 +4795,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Jordan Walker",
+      "player": "Alec Burleson",
       "row": 983,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4796,7 +4805,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Jordan Walker",
+      "player": "Alec Burleson",
       "row": 985,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4806,7 +4815,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Masyn Winn",
+      "player": "Nolan Gorman",
       "row": 987,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4816,7 +4825,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Masyn Winn",
+      "player": "Nolan Gorman",
       "row": 988,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4826,7 +4835,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Masyn Winn",
+      "player": "Nolan Gorman",
       "row": 990,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4836,7 +4845,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Nathan Church",
+      "player": "Jordan Walker",
       "row": 992,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4846,7 +4855,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Nathan Church",
+      "player": "Jordan Walker",
       "row": 993,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4856,7 +4865,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Nathan Church",
+      "player": "Jordan Walker",
       "row": 995,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4866,7 +4875,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Thomas Saggese",
+      "player": "Victor Scott II",
       "row": 997,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4876,7 +4885,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Thomas Saggese",
+      "player": "Victor Scott II",
       "row": 998,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4886,7 +4895,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Thomas Saggese",
+      "player": "Victor Scott II",
       "row": 1000,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4896,7 +4905,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Iv\u00e1n Herrera",
+      "player": "Leo Bernal",
       "row": 1002,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4906,7 +4915,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Iv\u00e1n Herrera",
+      "player": "Leo Bernal",
       "row": 1003,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4916,7 +4925,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Iv\u00e1n Herrera",
+      "player": "Leo Bernal",
       "row": 1005,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4926,7 +4935,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Nolan Gorman",
+      "player": "Thomas Saggese",
       "row": 1007,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4936,7 +4945,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Nolan Gorman",
+      "player": "Thomas Saggese",
       "row": 1008,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4946,7 +4955,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Nolan Gorman",
+      "player": "Thomas Saggese",
       "row": 1010,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4956,7 +4965,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Victor Scott II",
+      "player": "Bryan Torres",
       "row": 1012,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4966,7 +4975,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Victor Scott II",
+      "player": "Bryan Torres",
       "row": 1013,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -4976,7 +4985,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Victor Scott II",
+      "player": "Bryan Torres",
       "row": 1015,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -4986,7 +4995,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Abimelec Ortiz",
+      "player": "James Wood",
       "row": 1026,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -4996,7 +5005,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Abimelec Ortiz",
+      "player": "James Wood",
       "row": 1027,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -5006,7 +5015,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Abimelec Ortiz",
+      "player": "James Wood",
       "row": 1029,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -5016,7 +5025,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Brady House",
+      "player": "Jos\u00e9 Tena",
       "row": 1031,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -5026,7 +5035,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Brady House",
+      "player": "Jos\u00e9 Tena",
       "row": 1032,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -5036,7 +5045,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Brady House",
+      "player": "Jos\u00e9 Tena",
       "row": 1034,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -5046,7 +5055,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "CJ Abrams",
+      "player": "Daylen Lile",
       "row": 1036,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -5056,7 +5065,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "CJ Abrams",
+      "player": "Daylen Lile",
       "row": 1037,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -5066,7 +5075,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "CJ Abrams",
+      "player": "Daylen Lile",
       "row": 1039,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -5076,7 +5085,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Daylen Lile",
+      "player": "Dylan Crews",
       "row": 1041,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -5086,7 +5095,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Daylen Lile",
+      "player": "Dylan Crews",
       "row": 1042,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -5096,7 +5105,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Daylen Lile",
+      "player": "Dylan Crews",
       "row": 1044,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -5106,7 +5115,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Dylan Crews",
+      "player": "CJ Abrams",
       "row": 1046,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -5116,7 +5125,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Dylan Crews",
+      "player": "CJ Abrams",
       "row": 1047,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -5126,7 +5135,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Dylan Crews",
+      "player": "CJ Abrams",
       "row": 1049,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -5136,7 +5145,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Jacob Young",
+      "player": "Nasim Nu\u00f1ez",
       "row": 1051,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -5146,7 +5155,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Jacob Young",
+      "player": "Nasim Nu\u00f1ez",
       "row": 1052,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -5156,7 +5165,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Jacob Young",
+      "player": "Nasim Nu\u00f1ez",
       "row": 1054,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -5166,7 +5175,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "James Wood",
+      "player": "Brady House",
       "row": 1056,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -5176,7 +5185,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "James Wood",
+      "player": "Brady House",
       "row": 1057,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -5186,7 +5195,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "James Wood",
+      "player": "Brady House",
       "row": 1059,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -5226,7 +5235,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Keibert Ruiz",
+      "player": "Yohandy Morales",
       "row": 1066,
       "status": "BLOCKED_DATA",
       "target": "H"
@@ -5236,7 +5245,7 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Keibert Ruiz",
+      "player": "Yohandy Morales",
       "row": 1067,
       "status": "BLOCKED_DATA",
       "target": "TB"
@@ -5246,285 +5255,257 @@
         "BATTER_STATCAST_PROFILE",
         "PITCHER_STATCAST_PROFILE"
       ],
-      "player": "Keibert Ruiz",
+      "player": "Yohandy Morales",
       "row": 1069,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Adael Amador",
+      "player": "Cole Carrigg",
       "row": 1080,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Adael Amador",
+      "player": "Cole Carrigg",
       "row": 1081,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Adael Amador",
+      "player": "Cole Carrigg",
       "row": 1083,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Cole Carrigg",
+      "player": "Connor Norby",
       "row": 1085,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Cole Carrigg",
+      "player": "Connor Norby",
       "row": 1086,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Cole Carrigg",
+      "player": "Connor Norby",
       "row": 1088,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Connor Norby",
+      "player": "Ezequiel Tovar",
       "row": 1090,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Connor Norby",
+      "player": "Ezequiel Tovar",
       "row": 1091,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Connor Norby",
+      "player": "Ezequiel Tovar",
       "row": 1093,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Ezequiel Tovar",
+      "player": "Hunter Goodman",
       "row": 1095,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Ezequiel Tovar",
+      "player": "Hunter Goodman",
       "row": 1096,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Ezequiel Tovar",
+      "player": "Hunter Goodman",
       "row": 1098,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Hunter Goodman",
+      "player": "Jake McCarthy",
       "row": 1100,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Hunter Goodman",
+      "player": "Jake McCarthy",
       "row": 1101,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Hunter Goodman",
+      "player": "Jake McCarthy",
       "row": 1103,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jake McCarthy",
+      "player": "Kyle Karros",
       "row": 1105,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jake McCarthy",
+      "player": "Kyle Karros",
       "row": 1106,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jake McCarthy",
+      "player": "Kyle Karros",
       "row": 1108,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Kyle Karros",
+      "player": "Mickey Moniak",
       "row": 1110,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Kyle Karros",
+      "player": "Mickey Moniak",
       "row": 1111,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Kyle Karros",
+      "player": "Mickey Moniak",
       "row": 1113,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Mickey Moniak",
+      "player": "TJ Rumfield",
       "row": 1115,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Mickey Moniak",
+      "player": "TJ Rumfield",
       "row": 1116,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Mickey Moniak",
+      "player": "TJ Rumfield",
       "row": 1118,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "TJ Rumfield",
+      "player": "Zac Veen",
       "row": 1120,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "TJ Rumfield",
+      "player": "Zac Veen",
       "row": 1121,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "TJ Rumfield",
+      "player": "Zac Veen",
       "row": 1123,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Cal Raleigh",
       "row": 1134,
@@ -5533,8 +5514,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Cal Raleigh",
       "row": 1135,
@@ -5543,8 +5523,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Cal Raleigh",
       "row": 1137,
@@ -5553,131 +5532,118 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Cole Young",
+      "player": "Dominic Canzone",
       "row": 1139,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Cole Young",
+      "player": "Dominic Canzone",
       "row": 1140,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Cole Young",
+      "player": "Dominic Canzone",
       "row": 1142,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_MLBAM_ID",
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Dominic Canzone",
+      "player": "JP Crawford",
       "row": 1144,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_MLBAM_ID",
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Dominic Canzone",
+      "player": "JP Crawford",
       "row": 1145,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_MLBAM_ID",
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Dominic Canzone",
+      "player": "JP Crawford",
       "row": 1147,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_MLBAM_ID",
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "JP Crawford",
+      "player": "Josh Naylor",
       "row": 1149,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_MLBAM_ID",
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "JP Crawford",
+      "player": "Josh Naylor",
       "row": 1150,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_MLBAM_ID",
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "JP Crawford",
+      "player": "Josh Naylor",
       "row": 1152,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Josh Naylor",
+      "player": "Lazaro Montes",
       "row": 1154,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Josh Naylor",
+      "player": "Lazaro Montes",
       "row": 1155,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Josh Naylor",
+      "player": "Lazaro Montes",
       "row": 1157,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Randy Arozarena",
       "row": 1159,
@@ -5686,8 +5652,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Randy Arozarena",
       "row": 1160,
@@ -5696,8 +5661,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Randy Arozarena",
       "row": 1162,
@@ -5706,8 +5670,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Weston Wilson",
       "row": 1164,
@@ -5716,8 +5679,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Weston Wilson",
       "row": 1165,
@@ -5726,8 +5688,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Weston Wilson",
       "row": 1167,
@@ -5736,8 +5697,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Julio Rodr\u00edguez",
       "row": 1169,
@@ -5746,8 +5706,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Julio Rodr\u00edguez",
       "row": 1170,
@@ -5756,8 +5715,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Julio Rodr\u00edguez",
       "row": 1172,
@@ -5766,38 +5724,34 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Lazaro Montes",
+      "player": "Cole Young",
       "row": 1174,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Lazaro Montes",
+      "player": "Cole Young",
       "row": 1175,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Lazaro Montes",
+      "player": "Cole Young",
       "row": 1177,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Corbin Carroll",
       "row": 1188,
@@ -5806,8 +5760,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Corbin Carroll",
       "row": 1189,
@@ -5816,8 +5769,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Corbin Carroll",
       "row": 1191,
@@ -5826,8 +5778,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Gabriel Moreno",
       "row": 1193,
@@ -5836,8 +5787,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Gabriel Moreno",
       "row": 1194,
@@ -5846,8 +5796,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Gabriel Moreno",
       "row": 1196,
@@ -5856,8 +5805,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Geraldo Perdomo",
       "row": 1198,
@@ -5866,8 +5814,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Geraldo Perdomo",
       "row": 1199,
@@ -5876,8 +5823,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Geraldo Perdomo",
       "row": 1201,
@@ -5886,128 +5832,115 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Ketel Marte",
+      "player": "Jordan Lawlar",
       "row": 1203,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Ketel Marte",
+      "player": "Jordan Lawlar",
       "row": 1204,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Ketel Marte",
+      "player": "Jordan Lawlar",
       "row": 1206,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Lars Nootbaar",
+      "player": "Ketel Marte",
       "row": 1208,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Lars Nootbaar",
+      "player": "Ketel Marte",
       "row": 1209,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Lars Nootbaar",
+      "player": "Ketel Marte",
       "row": 1211,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Nolan Arenado",
+      "player": "Lars Nootbaar",
       "row": 1213,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Nolan Arenado",
+      "player": "Lars Nootbaar",
       "row": 1214,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Nolan Arenado",
+      "player": "Lars Nootbaar",
       "row": 1216,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Pavin Smith",
+      "player": "Nolan Arenado",
       "row": 1218,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Pavin Smith",
+      "player": "Nolan Arenado",
       "row": 1219,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Pavin Smith",
+      "player": "Nolan Arenado",
       "row": 1221,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Tim Tawa",
       "row": 1223,
@@ -6016,8 +5949,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Tim Tawa",
       "row": 1224,
@@ -6026,8 +5958,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Tim Tawa",
       "row": 1226,
@@ -6036,8 +5967,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Ildemaro Vargas",
       "row": 1228,
@@ -6046,8 +5976,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Ildemaro Vargas",
       "row": 1229,
@@ -6056,8 +5985,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Ildemaro Vargas",
       "row": 1231,
@@ -6066,8 +5994,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Anthony Volpe",
       "row": 1242,
@@ -6076,8 +6003,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Anthony Volpe",
       "row": 1243,
@@ -6086,8 +6012,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Anthony Volpe",
       "row": 1245,
@@ -6096,8 +6021,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Austin Wells",
       "row": 1247,
@@ -6106,8 +6030,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Austin Wells",
       "row": 1248,
@@ -6116,8 +6039,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Austin Wells",
       "row": 1250,
@@ -6126,8 +6048,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Ben Rice",
       "row": 1252,
@@ -6136,8 +6057,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Ben Rice",
       "row": 1253,
@@ -6146,8 +6066,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Ben Rice",
       "row": 1255,
@@ -6156,8 +6075,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Cody Bellinger",
       "row": 1257,
@@ -6166,8 +6084,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Cody Bellinger",
       "row": 1258,
@@ -6176,8 +6093,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Cody Bellinger",
       "row": 1260,
@@ -6186,8 +6102,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "George Lombard Jr",
       "row": 1262,
@@ -6196,8 +6111,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "George Lombard Jr",
       "row": 1263,
@@ -6206,8 +6120,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "George Lombard Jr",
       "row": 1265,
@@ -6216,8 +6129,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Heliot Ramos",
       "row": 1267,
@@ -6226,8 +6138,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Heliot Ramos",
       "row": 1268,
@@ -6236,8 +6147,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Heliot Ramos",
       "row": 1270,
@@ -6246,8 +6156,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Ryan McMahon",
       "row": 1272,
@@ -6256,8 +6165,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Ryan McMahon",
       "row": 1273,
@@ -6266,8 +6174,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Ryan McMahon",
       "row": 1275,
@@ -6276,68 +6183,61 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Spencer Jones",
+      "player": "Paul Goldschmidt",
       "row": 1277,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Spencer Jones",
+      "player": "Paul Goldschmidt",
       "row": 1278,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Spencer Jones",
+      "player": "Paul Goldschmidt",
       "row": 1280,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Paul Goldschmidt",
+      "player": "Amed Rosario",
       "row": 1282,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Paul Goldschmidt",
+      "player": "Amed Rosario",
       "row": 1283,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Paul Goldschmidt",
+      "player": "Amed Rosario",
       "row": 1285,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Dustin Harris",
       "row": 1296,
@@ -6346,8 +6246,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Dustin Harris",
       "row": 1297,
@@ -6356,8 +6255,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Dustin Harris",
       "row": 1299,
@@ -6366,8 +6264,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Fernando Tatis Jr",
       "row": 1301,
@@ -6376,8 +6273,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Fernando Tatis Jr",
       "row": 1302,
@@ -6386,8 +6282,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Fernando Tatis Jr",
       "row": 1304,
@@ -6396,218 +6291,196 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jackson Merrill",
+      "player": "Freddy Fermin",
       "row": 1306,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jackson Merrill",
+      "player": "Freddy Fermin",
       "row": 1307,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jackson Merrill",
+      "player": "Freddy Fermin",
       "row": 1309,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jake Cronenworth",
+      "player": "Jackson Merrill",
       "row": 1311,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jake Cronenworth",
+      "player": "Jackson Merrill",
       "row": 1312,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jake Cronenworth",
+      "player": "Jackson Merrill",
       "row": 1314,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Luis Campusano",
+      "player": "Jake Cronenworth",
       "row": 1316,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Luis Campusano",
+      "player": "Jake Cronenworth",
       "row": 1317,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Luis Campusano",
+      "player": "Jake Cronenworth",
       "row": 1319,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Manny Machado",
+      "player": "Luis Campusano",
       "row": 1321,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Manny Machado",
+      "player": "Luis Campusano",
       "row": 1322,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Manny Machado",
+      "player": "Luis Campusano",
       "row": 1324,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Samad Taylor",
+      "player": "Manny Machado",
       "row": 1326,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Samad Taylor",
+      "player": "Manny Machado",
       "row": 1327,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Samad Taylor",
+      "player": "Manny Machado",
       "row": 1329,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Ty France",
+      "player": "Samad Taylor",
       "row": 1331,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Ty France",
+      "player": "Samad Taylor",
       "row": 1332,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Ty France",
+      "player": "Samad Taylor",
       "row": 1334,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Xander Bogaerts",
+      "player": "Ty France",
       "row": 1336,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Xander Bogaerts",
+      "player": "Ty France",
       "row": 1337,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Xander Bogaerts",
+      "player": "Ty France",
       "row": 1339,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Esteury Ruiz",
       "row": 1350,
@@ -6616,8 +6489,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Esteury Ruiz",
       "row": 1351,
@@ -6626,8 +6498,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Esteury Ruiz",
       "row": 1353,
@@ -6636,240 +6507,216 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Griffin Conine",
+      "player": "Jakob Marsee",
       "row": 1355,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Griffin Conine",
+      "player": "Jakob Marsee",
       "row": 1356,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Griffin Conine",
+      "player": "Jakob Marsee",
       "row": 1358,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jakob Marsee",
+      "player": "Javier Sanoja",
       "row": 1360,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jakob Marsee",
+      "player": "Javier Sanoja",
       "row": 1361,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jakob Marsee",
+      "player": "Javier Sanoja",
       "row": 1363,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Javier Sanoja",
+      "player": "Joe Mack",
       "row": 1365,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Javier Sanoja",
+      "player": "Joe Mack",
       "row": 1366,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Javier Sanoja",
+      "player": "Joe Mack",
       "row": 1368,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Joe Mack",
+      "player": "Kyle Stowers",
       "row": 1370,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Joe Mack",
+      "player": "Kyle Stowers",
       "row": 1371,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Joe Mack",
+      "player": "Kyle Stowers",
       "row": 1373,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Kyle Stowers",
+      "player": "Otto Lopez",
       "row": 1375,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Kyle Stowers",
+      "player": "Otto Lopez",
       "row": 1376,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Kyle Stowers",
+      "player": "Otto Lopez",
       "row": 1378,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Otto Lopez",
+      "player": "Xavier Edwards",
       "row": 1380,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Otto Lopez",
+      "player": "Xavier Edwards",
       "row": 1381,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Otto Lopez",
+      "player": "Xavier Edwards",
       "row": 1383,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Xavier Edwards",
+      "player": "Heriberto Hern\u00e1ndez",
       "row": 1385,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Xavier Edwards",
+      "player": "Heriberto Hern\u00e1ndez",
       "row": 1386,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Xavier Edwards",
+      "player": "Heriberto Hern\u00e1ndez",
       "row": 1388,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Heriberto Hern\u00e1ndez",
+      "player": "Griffin Conine",
       "row": 1390,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Heriberto Hern\u00e1ndez",
+      "player": "Griffin Conine",
       "row": 1391,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Heriberto Hern\u00e1ndez",
+      "player": "Griffin Conine",
       "row": 1393,
       "status": "BLOCKED_DATA",
       "target": "HR"
@@ -7146,8 +6993,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Andrew Knizner",
       "row": 1458,
@@ -7156,8 +7002,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Andrew Knizner",
       "row": 1459,
@@ -7166,8 +7011,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Andrew Knizner",
       "row": 1461,
@@ -7176,8 +7020,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Brett Harris",
       "row": 1463,
@@ -7186,8 +7029,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Brett Harris",
       "row": 1464,
@@ -7196,8 +7038,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Brett Harris",
       "row": 1466,
@@ -7206,128 +7047,115 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Bryce Eldridge",
+      "player": "Christian Koss",
       "row": 1468,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Bryce Eldridge",
+      "player": "Christian Koss",
       "row": 1469,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Bryce Eldridge",
+      "player": "Christian Koss",
       "row": 1471,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Christian Koss",
+      "player": "Jonah Cox",
       "row": 1473,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Christian Koss",
+      "player": "Jonah Cox",
       "row": 1474,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Christian Koss",
+      "player": "Jonah Cox",
       "row": 1476,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jonah Cox",
+      "player": "Jung Hoo Lee",
       "row": 1478,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jonah Cox",
+      "player": "Jung Hoo Lee",
       "row": 1479,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jonah Cox",
+      "player": "Jung Hoo Lee",
       "row": 1481,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jung Hoo Lee",
+      "player": "Osleivis Basabe",
       "row": 1483,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jung Hoo Lee",
+      "player": "Osleivis Basabe",
       "row": 1484,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jung Hoo Lee",
+      "player": "Osleivis Basabe",
       "row": 1486,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Shay Whitcomb",
       "row": 1488,
@@ -7336,8 +7164,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Shay Whitcomb",
       "row": 1489,
@@ -7346,8 +7173,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Shay Whitcomb",
       "row": 1491,
@@ -7356,8 +7182,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Turner Hill",
       "row": 1493,
@@ -7366,8 +7191,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Turner Hill",
       "row": 1494,
@@ -7376,8 +7200,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Turner Hill",
       "row": 1496,
@@ -7386,188 +7209,169 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Drew Gilbert",
+      "player": "Victor Bericoto",
       "row": 1498,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Drew Gilbert",
+      "player": "Victor Bericoto",
       "row": 1499,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Drew Gilbert",
+      "player": "Victor Bericoto",
       "row": 1501,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Adam Frazier",
+      "player": "Denzer Guzman",
       "row": 1512,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Adam Frazier",
+      "player": "Denzer Guzman",
       "row": 1513,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Adam Frazier",
+      "player": "Denzer Guzman",
       "row": 1515,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Christian Moore",
+      "player": "Jose Siri",
       "row": 1517,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Christian Moore",
+      "player": "Jose Siri",
       "row": 1518,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Christian Moore",
+      "player": "Jose Siri",
       "row": 1520,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Denzer Guzman",
+      "player": "Josh Lowe",
       "row": 1522,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Denzer Guzman",
+      "player": "Josh Lowe",
       "row": 1523,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Denzer Guzman",
+      "player": "Josh Lowe",
       "row": 1525,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Josh Lowe",
+      "player": "Mike Trout",
       "row": 1527,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Josh Lowe",
+      "player": "Mike Trout",
       "row": 1528,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Josh Lowe",
+      "player": "Mike Trout",
       "row": 1530,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Mike Trout",
+      "player": "Tyler Heineman",
       "row": 1532,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Mike Trout",
+      "player": "Tyler Heineman",
       "row": 1533,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Mike Trout",
+      "player": "Tyler Heineman",
       "row": 1535,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Vaughn Grissom",
       "row": 1537,
@@ -7576,8 +7380,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Vaughn Grissom",
       "row": 1538,
@@ -7586,8 +7389,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Vaughn Grissom",
       "row": 1540,
@@ -7596,8 +7398,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Wade Meckler",
       "row": 1542,
@@ -7606,8 +7407,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Wade Meckler",
       "row": 1543,
@@ -7616,8 +7416,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Wade Meckler",
       "row": 1545,
@@ -7626,8 +7425,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Zach Neto",
       "row": 1547,
@@ -7636,8 +7434,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Zach Neto",
       "row": 1548,
@@ -7646,8 +7443,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Zach Neto",
       "row": 1550,
@@ -7656,38 +7452,34 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jose Siri",
+      "player": "Oswald Peraza",
       "row": 1552,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jose Siri",
+      "player": "Oswald Peraza",
       "row": 1553,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Jose Siri",
+      "player": "Oswald Peraza",
       "row": 1555,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Austin Martin",
       "row": 1566,
@@ -7696,8 +7488,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Austin Martin",
       "row": 1567,
@@ -7706,8 +7497,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Austin Martin",
       "row": 1569,
@@ -7716,8 +7506,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Brooks Lee",
       "row": 1571,
@@ -7726,8 +7515,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Brooks Lee",
       "row": 1572,
@@ -7736,8 +7524,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Brooks Lee",
       "row": 1574,
@@ -7746,8 +7533,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Josh Bell",
       "row": 1576,
@@ -7756,8 +7542,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Josh Bell",
       "row": 1577,
@@ -7766,8 +7551,7 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
       "player": "Josh Bell",
       "row": 1579,
@@ -7776,180 +7560,162 @@
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Kody Clemens",
+      "player": "Luke Keaschall",
       "row": 1581,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Kody Clemens",
+      "player": "Luke Keaschall",
       "row": 1582,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Kody Clemens",
+      "player": "Luke Keaschall",
       "row": 1584,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Luke Keaschall",
+      "player": "Royce Lewis",
       "row": 1586,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Luke Keaschall",
+      "player": "Royce Lewis",
       "row": 1587,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Luke Keaschall",
+      "player": "Royce Lewis",
       "row": 1589,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Royce Lewis",
+      "player": "Ryan Jeffers",
       "row": 1591,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Royce Lewis",
+      "player": "Ryan Jeffers",
       "row": 1592,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Royce Lewis",
+      "player": "Ryan Jeffers",
       "row": 1594,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Ryan Jeffers",
+      "player": "Ryan Kreidler",
       "row": 1596,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Ryan Jeffers",
+      "player": "Ryan Kreidler",
       "row": 1597,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Ryan Jeffers",
+      "player": "Ryan Kreidler",
       "row": 1599,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Walker Jenkins",
+      "player": "Victor Caratini",
       "row": 1601,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Walker Jenkins",
+      "player": "Victor Caratini",
       "row": 1602,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Walker Jenkins",
+      "player": "Victor Caratini",
       "row": 1604,
       "status": "BLOCKED_DATA",
       "target": "HR"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Ryan Kreidler",
+      "player": "Walker Jenkins",
       "row": 1606,
       "status": "BLOCKED_DATA",
       "target": "H"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Ryan Kreidler",
+      "player": "Walker Jenkins",
       "row": 1607,
       "status": "BLOCKED_DATA",
       "target": "TB"
     },
     {
       "missing": [
-        "BATTER_STATCAST_PROFILE",
-        "PITCHER_STATCAST_PROFILE"
+        "BATTER_STATCAST_PROFILE"
       ],
-      "player": "Ryan Kreidler",
+      "player": "Walker Jenkins",
       "row": 1609,
       "status": "BLOCKED_DATA",
       "target": "HR"
