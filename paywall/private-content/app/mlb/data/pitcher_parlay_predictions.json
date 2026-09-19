@@ -3537,7 +3537,11 @@
       "sportsbook": "fanduel",
       "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.186983275&selectionId=89217086",
       "support_blocking_dimensions": [],
-      "team": "STL"
+      "team": "STL",
+      "settlement_status": "lost",
+      "settlement_actual_value": 1.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-09-19T11:50:55.078097+00:00"
     },
     "leg_b": {
       "deeplinks_by_region": {
@@ -3583,7 +3587,11 @@
       "sportsbook": "fanduel",
       "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.186984083&selectionId=39009179",
       "support_blocking_dimensions": [],
-      "team": "NYY"
+      "team": "NYY",
+      "settlement_status": "won",
+      "settlement_actual_value": 6.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-09-19T11:50:55.078097+00:00"
     },
     "leg_decimal_price_floor": 1.2,
     "leg_expected_value_floor": 0.0,
