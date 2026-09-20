@@ -3,7 +3,7 @@
   "league": "NFL",
   "season": 2026,
   "week": 1,
-  "generated_at_utc": "2026-09-18T01:28:44.376867Z",
+  "generated_at_utc": "2026-09-20T19:01:58.507435Z",
   "status": "projection_pool_ready",
   "market_status": "awaiting_lines",
   "market_observations": 0,
@@ -28,11 +28,11 @@
     "raw_source_sha256": null
   },
   "games": 16,
-  "players": 200,
+  "players": 201,
   "position_counts": {
     "QB": 32,
     "RB": 55,
-    "WR": 82,
+    "WR": 83,
     "TE": 31
   },
   "scope": "Current depth-chart QB1, RB1-2, WR1-3, and TE1 primary-yardage projections; not sportsbook picks.",
@@ -3010,8 +3010,8 @@
       "game_id": "2026_01_ARI_LAC",
       "kickoff_utc": "2026-09-13T20:25:00Z",
       "position": "WR",
-      "depth_rank": 2,
-      "depth_role": "WR2",
+      "depth_rank": 1,
+      "depth_role": "WR1",
       "target": "receiving_yards",
       "target_label": "Receiving yards",
       "projection": 54.6,
@@ -3535,8 +3535,8 @@
       "game_id": "2026_01_ARI_LAC",
       "kickoff_utc": "2026-09-13T20:25:00Z",
       "position": "WR",
-      "depth_rank": 1,
-      "depth_role": "WR1",
+      "depth_rank": 2,
+      "depth_role": "WR2",
       "target": "receiving_yards",
       "target_label": "Receiving yards",
       "projection": 37.0,
@@ -4010,6 +4010,27 @@
       "projection_rank": 61
     },
     {
+      "player_id": "00-0039451",
+      "player": "Isaiah Williams",
+      "team": "NYJ",
+      "opponent": "TEN",
+      "venue": "away",
+      "game_id": "2026_01_NYJ_TEN",
+      "kickoff_utc": "2026-09-13T17:00:00Z",
+      "position": "WR",
+      "depth_rank": 3,
+      "depth_role": "WR3",
+      "target": "receiving_yards",
+      "target_label": "Receiving yards",
+      "projection": 27.3,
+      "p10": 4.3,
+      "median": 26.4,
+      "p90": 68.2,
+      "market_line": null,
+      "market_status": "awaiting_two_sided_lines",
+      "projection_rank": 62
+    },
+    {
       "player_id": "00-0033908",
       "player": "Cooper Kupp",
       "team": "SEA",
@@ -4028,7 +4049,7 @@
       "p90": 67.0,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 62
+      "projection_rank": 63
     },
     {
       "player_id": "00-0040727",
@@ -4049,7 +4070,7 @@
       "p90": 61.6,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 63
+      "projection_rank": 64
     },
     {
       "player_id": "00-0037291",
@@ -4070,7 +4091,7 @@
       "p90": 60.0,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 64
+      "projection_rank": 65
     },
     {
       "player_id": "00-0037741",
@@ -4091,7 +4112,7 @@
       "p90": 59.6,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 65
+      "projection_rank": 66
     },
     {
       "player_id": "00-0035208",
@@ -4112,7 +4133,7 @@
       "p90": 59.4,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 66
+      "projection_rank": 67
     },
     {
       "player_id": "00-0038618",
@@ -4133,7 +4154,7 @@
       "p90": 59.2,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 67
+      "projection_rank": 68
     },
     {
       "player_id": "00-0039342",
@@ -4154,7 +4175,7 @@
       "p90": 59.1,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 68
+      "projection_rank": 69
     },
     {
       "player_id": "00-0040729",
@@ -4175,7 +4196,7 @@
       "p90": 58.8,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 69
+      "projection_rank": 70
     },
     {
       "player_id": "00-0038619",
@@ -4196,7 +4217,7 @@
       "p90": 58.7,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 70
+      "projection_rank": 71
     },
     {
       "player_id": "00-0038608",
@@ -4217,7 +4238,7 @@
       "p90": 58.6,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 71
+      "projection_rank": 72
     },
     {
       "player_id": "00-0032464",
@@ -4238,7 +4259,7 @@
       "p90": 57.5,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 72
+      "projection_rank": 73
     },
     {
       "player_id": "00-0038104",
@@ -4259,7 +4280,7 @@
       "p90": 57.3,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 73
+      "projection_rank": 74
     },
     {
       "player_id": "00-0040669",
@@ -4280,7 +4301,7 @@
       "p90": 56.6,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 74
+      "projection_rank": 75
     },
     {
       "player_id": "00-0039880",
@@ -4301,7 +4322,7 @@
       "p90": 56.2,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 75
+      "projection_rank": 76
     },
     {
       "player_id": "00-0038621",
@@ -4322,7 +4343,7 @@
       "p90": 55.4,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 76
+      "projection_rank": 77
     },
     {
       "player_id": "00-0032775",
@@ -4343,7 +4364,7 @@
       "p90": 55.4,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 77
+      "projection_rank": 78
     },
     {
       "player_id": "00-0036550",
@@ -4364,7 +4385,7 @@
       "p90": 55.3,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 78
+      "projection_rank": 79
     },
     {
       "player_id": "00-0040667",
@@ -4385,7 +4406,7 @@
       "p90": 54.7,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 79
+      "projection_rank": 80
     },
     {
       "player_id": "00-0039739",
@@ -4406,7 +4427,7 @@
       "p90": 54.2,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 80
+      "projection_rank": 81
     },
     {
       "player_id": "00-0038976",
@@ -4427,7 +4448,7 @@
       "p90": 52.7,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 81
+      "projection_rank": 82
     },
     {
       "player_id": "00-0033307",
@@ -4448,7 +4469,7 @@
       "p90": 51.2,
       "market_line": null,
       "market_status": "awaiting_two_sided_lines",
-      "projection_rank": 82
+      "projection_rank": 83
     }
   ]
 }
