@@ -5,11 +5,11 @@
       "new_batter_statcast_fetches": 0,
       "new_date_requires_new_partition": true,
       "new_direct_matchups": 0,
-      "new_pitcher_statcast_fetches": 4,
+      "new_pitcher_statcast_fetches": 0,
       "reused_batter_profiles": 0,
       "reused_direct_matchups": 0,
-      "reused_pitcher_profiles": 0,
-      "same_asof_partition_reused": false
+      "reused_pitcher_profiles": 4,
+      "same_asof_partition_reused": true
     },
     "candidate_identities": 48,
     "defense_layer": {
@@ -20,7 +20,7 @@
     "direct_matchups": 0,
     "effective_as_of_date": "2026-09-20",
     "failures": [],
-    "fetched_at_utc": "2026-09-21T20:16:26.379439+00:00",
+    "fetched_at_utc": "2026-09-21T20:29:28.816603+00:00",
     "freshness_policy": {
       "historical_cutoff": "strictly_before_run_date",
       "max_profile_age_days": 3,
@@ -76,7 +76,7 @@
   "blocked_rows": 162,
   "data_freshness_status": "FRESH",
   "evaluated_h_tb_hr_rows": 162,
-  "generated_at_utc": "2026-09-21T20:16:26.713818+00:00",
+  "generated_at_utc": "2026-09-21T20:29:29.054620+00:00",
   "identity": {
     "games_requested": 3,
     "games_resolved": 3,
@@ -109,7 +109,7 @@
   "pregame_feature_snapshot": {
     "captured": true,
     "outcomes_included": false,
-    "path": "sports/mlb/web/data/history/runs/2026-09-21/game_conditioned_pregame/20260921T201626Z_7e46131e3181e5d8.json"
+    "path": "sports/mlb/web/data/history/runs/2026-09-21/game_conditioned_pregame/20260921T202929Z_10f160a8a1b14722.json"
   },
   "rows": [
     {
