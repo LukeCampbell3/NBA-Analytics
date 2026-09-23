@@ -1835,7 +1835,11 @@
       "sportsbook": "fanduel",
       "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.187604084&selectionId=44233033",
       "support_blocking_dimensions": [],
-      "team": "TEX"
+      "team": "TEX",
+      "settlement_status": "lost",
+      "settlement_actual_value": 2.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-09-23T19:11:29.305644+00:00"
     },
     "leg_b": {
       "deeplinks_by_region": {
@@ -1881,7 +1885,11 @@
       "sportsbook": "fanduel",
       "sportsbook_deeplink": "https://sportsbook.fanduel.com/addToBetslip?marketId=734.187624686&selectionId=39698921",
       "support_blocking_dimensions": [],
-      "team": "SD"
+      "team": "SD",
+      "settlement_status": "won",
+      "settlement_actual_value": 5.0,
+      "settlement_source": "mlb_statsapi_live_feed",
+      "settlement_checked_at": "2026-09-23T19:11:29.305644+00:00"
     },
     "leg_decimal_price_floor": 1.2,
     "leg_expected_value_floor": 0.0,
