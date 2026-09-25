@@ -1,10 +1,10 @@
 {
   "abstain_reason": "NO_LEG_MARKET_SUPPORT",
   "action": "ABSTAIN",
-  "calibration_as_of": "2026-09-24T01:36:50.764164+00:00",
-  "calibration_snapshot_id": "9961f58325c00f86",
-  "calibration_snapshot_sha256": "9961f58325c00f8619ef0d1a24061e00ce161e3fe2064450a060527a52d8fbd3",
-  "decision_timestamp_utc": "2026-09-24T01:36:50.831325+00:00",
+  "calibration_as_of": "2026-09-25T01:47:19.330573+00:00",
+  "calibration_snapshot_id": "7da51ce2acf698da",
+  "calibration_snapshot_sha256": "7da51ce2acf698daa15449da69b54f903abe420505e4440127bdcb2bbd56f3c1",
+  "decision_timestamp_utc": "2026-09-25T01:47:19.399208+00:00",
   "eligibility_reason": "operationally_eligible",
   "eligible": true,
   "evidence_status": {
@@ -19,24 +19,11 @@
   "selection_status": "ABSTAIN",
   "shadow_candidate": {
     "adapter_version": "NFL_PARLAY_V2_CANDIDATE_ADAPTER_V1",
-    "candidate_id": "2026-W39|Jalen Hurts|player_pass_yds|OVER|217.5|2978686||Dak Prescott|player_pass_yds|OVER|263.5|2978392",
-    "joint_probability_estimate": 0.38860732416,
+    "candidate_id": "2026-W39|Dak Prescott|player_pass_yds|OVER|263.5|2978392||Jalen Hurts|player_pass_yds|OVER|218.5|2978686",
+    "joint_probability_estimate": 0.38844289228799994,
     "joint_probability_method": "independence_binary_world_model",
     "joint_score": 1.0,
     "leg_1": {
-      "book": "draftkings",
-      "decimal_price": 1.900900900900901,
-      "event_id": "2978686",
-      "in_support": true,
-      "line": 217.5,
-      "model_probability_estimate": 0.62392,
-      "player": "Jalen Hurts",
-      "player_id": "00-0036389",
-      "quote_timestamp": "2026-09-24T01:35:26.833659+00:00",
-      "side": "OVER",
-      "target": "player_pass_yds"
-    },
-    "leg_2": {
       "book": "fanduel",
       "decimal_price": 1.8771929824561404,
       "event_id": "2978392",
@@ -45,7 +32,20 @@
       "model_probability_estimate": 0.622848,
       "player": "Dak Prescott",
       "player_id": "00-0033077",
-      "quote_timestamp": "2026-09-24T01:35:26.833659+00:00",
+      "quote_timestamp": "2026-09-25T01:46:11.113305+00:00",
+      "side": "OVER",
+      "target": "player_pass_yds"
+    },
+    "leg_2": {
+      "book": "draftkings",
+      "decimal_price": 1.8849557522123894,
+      "event_id": "2978686",
+      "in_support": true,
+      "line": 218.5,
+      "model_probability_estimate": 0.623656,
+      "player": "Jalen Hurts",
+      "player_id": "00-0036389",
+      "quote_timestamp": "2026-09-25T01:46:11.113305+00:00",
       "side": "OVER",
       "target": "player_pass_yds"
     },
@@ -60,7 +60,7 @@
     "week_id": "2026-W39",
     "world_diagnostics": {
       "counterexample_count": 3,
-      "counterexample_mass": 0.61139267584,
+      "counterexample_mass": 0.611557107712,
       "nonvacuous_world_certificate": false,
       "retained_probability_mass": 1.0,
       "retained_world_count": 4
