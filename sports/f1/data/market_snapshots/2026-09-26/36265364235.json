@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "audit": {
+    "provider": "free_exchange_consensus",
+    "status": "no_markets",
+    "fetched_at_utc": "2026-09-26T19:15:44.242459+00:00",
+    "observations": 0,
+    "credential_required": false,
+    "sources": [
+      {
+        "provider": "polymarket",
+        "status": "no_markets",
+        "fetched_at_utc": "2026-09-26T19:15:39.203470+00:00",
+        "events_discovered": 8,
+        "observations": 0,
+        "credential_required": false,
+        "raw_source_sha256": "feb4ebe805655242fec1edde422c0542c396d3c2db70f3c55c26d30a822598e7"
+      },
+      {
+        "provider": "kalshi",
+        "status": "no_markets",
+        "fetched_at_utc": "2026-09-26T19:15:44.234935+00:00",
+        "series_discovered": 29,
+        "events_discovered": 0,
+        "observations": 0,
+        "credential_required": false,
+        "raw_source_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    ],
+    "provider_attempts": [
+      {
+        "provider": "polymarket",
+        "status": "no_markets",
+        "observations": 0
+      },
+      {
+        "provider": "kalshi",
+        "status": "no_markets",
+        "observations": 0
+      }
+    ]
+  },
+  "observations": []
+}
