@@ -1,15 +1,8 @@
 name: MLB Game-Conditioned Outcome-Joined Validation
 
 on:
-  push:
-    branches: [static-deployment]
-    paths:
-      - 'sports/mlb/scripts/fit_game_conditioned_hitter_moe_outcome_joined.py'
-      - 'sports/mlb/scripts/collect_historical_game_conditioned_outcomes.py'
-      - 'sports/mlb/tests/test_game_conditioned_outcome_joined.py'
-      - 'sports/mlb/data/predictions/backtests/game_conditioned_historical_outcomes_2026.jsonl.gz'
-      - '.github/workflows/mlb-game-conditioned-outcome-joined-validation.yml'
   workflow_dispatch:
+
 
 permissions:
   contents: write
