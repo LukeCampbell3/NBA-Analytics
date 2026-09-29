@@ -1,14 +1,8 @@
 name: MLB Game-Conditioned Historical Outcomes
 
 on:
-  push:
-    branches: [static-deployment]
-    paths:
-      - 'sports/mlb/scripts/collect_historical_game_conditioned_outcomes.py'
-      - 'sports/mlb/tests/test_historical_game_conditioned_outcomes.py'
-      - 'Player-Predictor/Data-Proc-MLB/**/2026_processed_processed.csv'
-      - '.github/workflows/mlb-game-conditioned-historical-outcomes.yml'
   workflow_dispatch:
+
 
 permissions:
   contents: write
