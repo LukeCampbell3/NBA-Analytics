@@ -1,23 +1,6 @@
 name: MLB Publication Reliability Contract
 
 on:
-  push:
-    branches: [static-deployment]
-    paths:
-      - 'sports/mlb/scripts/apply_publication_protocol.py'
-      - 'sports/mlb/scripts/preserve_published_predictions.py'
-      - 'sports/mlb/scripts/settle_published_predictions.py'
-      - 'sports/mlb/tests/test_apply_publication_protocol.py'
-      - 'sports/mlb/tests/test_discovery_public_retention.py'
-      - 'sports/mlb/tests/test_preserve_published_predictions.py'
-      - 'sports/mlb/tests/test_settle_published_predictions.py'
-      - 'sports/site/pipeline/build_static_site.py'
-      - 'sports/site/tests/test_mlb_prediction_data_exports.py'
-      - '.github/workflows/mlb-publication-controller.yml'
-      - '.github/workflows/mlb-publication-worker.yml'
-      - '.github/workflows/mlb-publication-watchdog.yml'
-      - '.github/workflows/mlb-lineup-refresh-dispatch.yml'
-      - '.github/workflows/mlb-publication-contract.yml'
   workflow_dispatch:
 
 permissions:
