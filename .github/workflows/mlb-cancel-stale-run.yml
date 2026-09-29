@@ -1,10 +1,8 @@
 name: MLB Cancel Stale Legacy Run
 
 on:
-  push:
-    branches: [static-deployment]
-    paths:
-      - '.github/workflows/mlb-cancel-stale-run.yml'
+  workflow_dispatch:
+
 
 permissions:
   actions: write
