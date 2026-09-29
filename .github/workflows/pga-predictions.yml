@@ -1,13 +1,6 @@
 name: PGA Golf Predictions and Frontend
 
 on:
-  schedule:
-    # Daily during the real PGA Tour season window (Jan-Dec covers the
-    # regular season, the FedEx Cup playoffs, and the fall series) -- the
-    # pipeline itself reports an honest no-event/field-not-posted state on
-    # any real off week rather than needing the cron to guess event weeks.
-    - cron: "12 13 * * *"
-      timezone: "America/New_York"
   workflow_dispatch:
     inputs:
       build_only:
