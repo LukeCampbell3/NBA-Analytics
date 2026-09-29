@@ -1,11 +1,8 @@
 name: MLB Game-Conditioned Frontend Compatibility Repair
 
 on:
-  push:
-    branches: [static-deployment]
-    paths:
-      - '.github/workflows/mlb-game-conditioned-schema-compat.yml'
   workflow_dispatch:
+
 
 permissions:
   contents: write
