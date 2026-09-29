@@ -1,13 +1,8 @@
 name: MLB Frontend Consistency
 
 on:
-  push:
-    branches: [static-deployment]
-    paths:
-      - '.github/workflows/mlb-frontend-consistency.yml'
-  workflow_run:
-    workflows: ["MLB Predictions and Frontend"]
-    types: [completed]
+  workflow_dispatch:
+
 
 concurrency:
   group: mlb-frontend-consistency-static-deployment
