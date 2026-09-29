@@ -11,8 +11,6 @@ name: Weekly Player Headshot Refresh
 # keeps its previously cached real image.
 
 on:
-  schedule:
-    - cron: "0 9 * * 0" # Sundays 09:00 UTC
   workflow_dispatch: {}
 
 concurrency:
