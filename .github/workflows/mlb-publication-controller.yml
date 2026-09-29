@@ -1,12 +1,6 @@
 name: MLB Publication Controller
 
 on:
-  schedule:
-    # GitHub cron is UTC. During EDT these are 11:30 AM and 5:30 PM Eastern.
-    # PUBLISH establishes the immutable official board. LATE_ADD may append
-    # newly qualified lineup-window picks but can never remove or rewrite picks.
-    - cron: '30 15 * 3-10 *'
-    - cron: '30 21 * 3-10 *'
   workflow_dispatch:
     inputs:
       run_date:
