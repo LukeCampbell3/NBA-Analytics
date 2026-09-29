@@ -1,10 +1,8 @@
 name: MLB Trigger Final Frontend Handoff
 
 on:
-  push:
-    branches: [static-deployment]
-    paths:
-      - '.github/workflows/mlb-frontend-handoff-trigger.yml'
+  workflow_dispatch:
+
 
 permissions:
   actions: write
