@@ -3,12 +3,6 @@ name: NFL Predictions and Frontend
 on:
   # Publish once near each normal NFL kickoff window. Repository pushes no
   # longer rebuild the live board and unexpectedly replace already shown picks.
-  schedule:
-    - cron: "30 23 * 9 3"          # opening-week Wednesday window
-    - cron: "30 23 * 9-12 4"       # Thursday evening games
-    - cron: "30 16 * 1-2,9-12 0"   # Sunday early window
-    - cron: "30 23 * 1,9-12 1"     # Monday evening games
-    - cron: "0 20 * 1 6"           # Saturday postseason window
   workflow_dispatch:
     inputs:
       run_date:
