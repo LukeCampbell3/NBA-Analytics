@@ -1,12 +1,6 @@
 name: MLB Publication Watchdog
 
 on:
-  schedule:
-    # EDT: 12:15 PM and 1:15 PM verify the 11:30 official publish;
-    # 6:15 PM verifies the 5:30 append-only late-add pass.
-    - cron: '15 16 * 3-10 *'
-    - cron: '15 17 * 3-10 *'
-    - cron: '15 22 * 3-10 *'
   workflow_dispatch:
 
 permissions:
