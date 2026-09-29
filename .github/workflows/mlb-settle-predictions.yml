@@ -1,17 +1,6 @@
 name: MLB Settle Predictions
 
 on:
-  schedule:
-    # 3am America/New_York -- strictly before mlb-predictions.yml's 8:17am
-    # run, so the previous day's real games are already final (they end
-    # the night before) but archive_previous_prediction_payload() hasn't
-    # yet copied daily_predictions.json into history/<date>.json for that
-    # day. Settling daily_predictions.json here, before that copy happens,
-    # is what makes the settled result show up automatically in the
-    # archived history file too -- see settle_published_predictions.py's
-    # own module docstring.
-    - cron: "0 3 * * *"
-      timezone: "America/New_York"
   workflow_dispatch:
     inputs:
       only_date:
