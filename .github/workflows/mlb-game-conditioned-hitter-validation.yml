@@ -1,28 +1,8 @@
 name: MLB Game-Conditioned Hitter Validation
 
 on:
-  push:
-    branches: [static-deployment]
-    paths:
-      - 'sports/mlb/advanced/game_conditioned_moe.py'
-      - 'sports/mlb/advanced/game_conditioned_authority.py'
-      - 'sports/mlb/advanced/integration.py'
-      - 'sports/mlb/advanced/schema.py'
-      - 'sports/mlb/advanced/sequential_pa_model.py'
-      - 'sports/mlb/scripts/fit_game_conditioned_hitter_moe.py'
-      - 'sports/mlb/scripts/fit_game_conditioned_hitter_moe_nonregression.py'
-      - 'sports/mlb/scripts/validate_game_conditioned_authority.py'
-      - 'sports/mlb/scripts/run_sequential_pa_hitter_model.py'
-      - 'sports/mlb/scripts/select_high_precision_predictions.py'
-      - 'sports/mlb/tests/test_game_conditioned_authority.py'
-      - 'sports/mlb/tests/test_game_conditioned_hitter_moe.py'
-      - 'sports/mlb/tests/test_game_conditioned_matchup_state.py'
-      - 'sports/mlb/tests/test_game_conditioned_pregame_snapshot.py'
-      - 'sports/mlb/tests/test_game_conditioned_runtime_authority.py'
-      - 'sports/mlb/tests/test_sequential_pa_model.py'
-      - 'sports/mlb/tests/test_sequential_pa_identity_hydration.py'
-      - '.github/workflows/mlb-game-conditioned-hitter-validation.yml'
   workflow_dispatch:
+
 
 permissions:
   contents: write
