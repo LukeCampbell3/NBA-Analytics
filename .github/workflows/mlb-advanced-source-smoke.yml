@@ -1,14 +1,8 @@
 name: MLB Advanced Source Smoke
 
 on:
-  push:
-    branches: [static-deployment]
-    paths:
-      - '.github/workflows/mlb-advanced-source-smoke.yml'
-      - 'sports/mlb/scripts/smoke_advanced_mlb_sources.py'
-      - 'sports/mlb/advanced/**'
-      - 'sports/mlb/requirements-same-game.txt'
   workflow_dispatch:
+
 
 permissions:
   contents: write
