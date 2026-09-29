@@ -1,10 +1,8 @@
 name: MLB Authoritative Frontend Handoff
 
 on:
-  workflow_run:
-    workflows: ["MLB Authoritative Publication Worker"]
-    types: [completed]
   workflow_dispatch:
+
 
 concurrency:
   group: mlb-authoritative-frontend-handoff
